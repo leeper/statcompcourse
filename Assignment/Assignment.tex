@@ -1,0 +1,32 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[top=0in, bottom=1in, left=1in, right=1in]{geometry}
+
+\title{Regression Computation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\noindent {\bfseries Due: to Thomas via email ({\texttt tleeper@ps.au.dk})}
+
+
+\vspace{2em}
+
+\noindent The purpose of this assignment is for you to demonstrate your understanding of the mathematics and computational procedures involved in the estimation of basic regression models. Below are two regression models. One is an model explaining XXXX as a function of several covariates. The reported coefficient estimates were obtained using ordinary least squares (OLS) regression analysis. The other is a model explaining XXX as a function of several covariates. The reported coefficient estimates are from a logistic regression estimation. Your task is to reproduce these analyses using R (or Stata), without the use of the \texttt{lm}, \texttt{glm}, \texttt{lm.fit}, or similar ready-made functions (or, for Stata, without the use of \texttt{reg}, \texttt{logit}, \texttt{glm}, or similar commands). The instructions below outline the code you should produce.
+
+\begin{enumerate}
+\item 
+% translate data into a design matrix involing categorical indicators and an interaction
+% estimate OLS coefficients and SEs using matrix notation
+% QR decomposition?
+% re-estimate SEs using bootstrapping and jackknife estimation
+
+% write the likelihood function for logistic regression
+% estimate coefficients for the logistic model using maximum likelihood estimation via a grid search, gradient descent, and `optim` (you do not need to estimate the standard errors)
+% compute predicted probabilities of observing the outcome from the estimated coefficients
+\end{enumerate}
+
+
+\end{document}

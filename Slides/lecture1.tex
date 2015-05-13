@@ -1,57 +1,78 @@
-\input{preamble}
+\documentclass[a4paper,12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{hyperref}
 
 \title{Matrix Operations and Functions}
-
-\date[]{}
+\author{Thomas J. Leeper}
+\date{May 12, 2015}
 
 \begin{document}
 
-\frame{\titlepage}
+\maketitle
 
-\frame{\tableofcontents}
+\doublespacing
 
 \section{R Basics}
-\frame{\tableofcontents[currentsection]}
 
 % objects
 % object classes
+% vectors
+% vector indexing (positional, logical)
+  % vectorization/vector operations
+  % recycling
 % coercion
 % data.frames
 % data I/O
 
 \section{Matrices}
-\frame{\tableofcontents[currentsection]}
 
-% vectors
-% vector indexing (positional, logical)
+% OLS in matrix notation (only show the matrix representation, not the R solution)
+  % show the formula for variance-covariance matrix
+
 % matrices
+  % square matrix
+  % upper/lower triangle
+  % identity matrix
+  % row and column vectors
+  % representaton of data as a matrix
 % matrix indexing
 % matrix operations
   % algebra
+    % scalar operations (addition, subtraction, multiplication, division)
+    % conformability
+    % matrix multiplication
+      % vector multiplication (dot product)
+      % multiplication by an identity matrix
+      % symmetric matrices
+      % additivie property (X + Y)' = X' + Y'
   % transpose
   % inversion
+    % invertability
+    % QR decomposition
+
+
+\section{Formulae}
 
 
 \section{Functions}
-\frame{\tableofcontents[currentsection]}
 
 % built-in functions
   % mean
+  % sum
   % exp
   % log
+  % sqrt
+  % diag
+  % length
 
 % writing functions
   % functions with no arguments
   % functions with one argument
   % functions with optional and default arguments
 
-% vectorization
-
-% argument recycling
+% argument recycling, again
 
 % generics and method dispatch
-
-\appendix
-\frame{}
 
 \end{document}

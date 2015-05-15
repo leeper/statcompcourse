@@ -1,0 +1,256 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{listings}
+    \lstset{basicstyle=\singlespacing\footnotesize\ttfamily}
+\usepackage{comment}
+    \excludecomment{solution}
+    %\includecomment{solution}
+
+\title{Regression Computation Assignment}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+{\onehalfspacing
+
+\section*{Purpose}
+
+The purpose of this assignment is for you to demonstrate your understanding of the mathematics and computational procedures involved in the estimation of basic regression models. Below are two regression models. One is an model explaining life expectancy as a function of several covariates. The reported coefficient estimates were obtained using ordinary least squares (OLS) regression analysis using R's \texttt{lm} function. The other is a model explaining democracy as a function of several covariates. The reported coefficient estimates are from a logistic regression estimation using R's \texttt{glm} function. All data are drawn from the Quality of Government Basic Dataset. The data and codebook are available here: \url{http://qog.pol.gu.se/data/datadownloads/qogbasicdata}.
+
+\section*{Overview}
+
+Your task is to reproduce these analyses using R (or Stata), without the use of the \texttt{lm}, \texttt{glm}, \texttt{lm.fit}, or similar ready-made functions (or, for Stata, without the use of \texttt{reg}, \texttt{logit}, \texttt{glm}, or similar commands). The instructions below outline the code you should produce. You may use R (based on techniques from lecture) or Stata (for relevant technical details on Stata, see Ch. 11 and Appendix A from Cameron and Trivedi 2010).
+}
+
+\section*{Submitting Your Assignment}
+
+\noindent Submit your assignment via email to Thomas (\url{mailto:tleeper@ps.au.dk}) in the form of a complete R syntax file (.R) or Stata (.do) file in your submitted assignment. Each step of the code should be numbered according to the tasks.
+
+\vspace{1em}
+\noindent The assignment is due on XXXX at XXXX.
+
+
+\begin{enumerate}
+
+\clearpage
+\section{Ordinary Least Squares Regression}
+
+\begin{lstlisting}
+d <- rio::import("http://www.qogdata.pol.gu.se/data/qog_bas_cs_jan15.csv")
+f <- une_leb ~ I(gle_cgdpc/1e4)*factor(chga_demo) + 
+               I(ross_oil_netexpc/1e3) + factor(ht_colonial)
+m1 <- lm(f, data = d)
+summary(m1)
+
+Coefficients:
+                                        Estimate Std. Error t value Pr(>|t|)    
+(Intercept)                            6.487e+01  1.488e+00  43.603  < 2e-16 ***
+I(gle_cgdpc/10000)                     3.623e+00  6.691e-01   5.415 2.36e-07 ***
+factor(chga_demo)1                     2.875e+00  1.528e+00   1.882 0.061731 .  
+I(ross_oil_netexpc/1000)              -8.426e-01  3.342e-01  -2.521 0.012726 *  
+factor(ht_colonial)1                   7.251e-02  4.956e+00   0.015 0.988346    
+factor(ht_colonial)2                   3.135e+00  1.936e+00   1.620 0.107426    
+factor(ht_colonial)3                  -9.766e-01  5.070e+00  -0.193 0.847520    
+factor(ht_colonial)4                  -6.488e-01  6.901e+00  -0.094 0.925220    
+factor(ht_colonial)5                  -4.221e+00  1.531e+00  -2.757 0.006557 ** 
+factor(ht_colonial)6                  -6.117e+00  1.871e+00  -3.269 0.001337 ** 
+factor(ht_colonial)7                  -8.628e+00  3.255e+00  -2.650 0.008901 ** 
+factor(ht_colonial)8                  -1.510e+01  4.116e+00  -3.670 0.000336 ***
+factor(ht_colonial)10                 -5.885e+00  6.919e+00  -0.851 0.396304    
+I(gle_cgdpc/10000):factor(chga_demo)1 -1.179e-04  8.371e-01   0.000 0.999888    
+
+Residual standard error: 6.77 on 151 degrees of freedom
+  (28 observations deleted due to missingness)
+\end{lstlisting}
+
+
+\item Construct an appropriate design matrix for the regression model from the original variables in the dataset, including the specified categorical (factor) variables and interaction term. (See Fox p.153--154.)
+
+\begin{solution}
+\begin{lstlisting}
+
+library('rio')
+
+#model.matrix(~ 0 + factor(mtcars$cyl))
+
+\end{lstlisting}
+\end{solution}
+
+
+\item Estimate the Ordinary Least Squares (OLS) coefficients using matrix notation (see Fox p.155). You may use a QR decomposition in lieu of \texttt{solve} for matrix inversion if you so choose.
+
+\begin{solution}
+\begin{lstlisting}
+# using standard matrix notation (X'X)^{-1}X'y
+solve(t(X) %*% X) %*% t(X) %*% y
+
+# using a QR decomposition
+decomp <- qr(X)
+solve(qr.R(decomp)) %*% t(qr.Q(decomp)) %*% y
+\end{lstlisting}
+\end{solution}
+
+
+\item Obtain the fitted values, $\hat{y}$, from the regression model for a new observation that takes on the following values:
+
+
+\begin{solution}
+\begin{lstlisting}
+
+\end{lstlisting}
+\end{solution}
+
+
+
+
+\item Estimate the variance-covariance matrix of the OLS estimates and obtain estimated standard errors. The formula for OLS variance-covariance matrix is given on Fox p.158.
+
+\begin{solution}
+\begin{lstlisting}
+# Var(beta) = S^2 (X'X)^{-1}
+# S^2 = (e'e) / (n - k - 1)
+
+fitted <- X %*% b
+e <- fitted - y
+df <- nrow(X) - length(b)
+s2 <- (t(e) %*% e) / df
+
+# variance-covariance matrix
+V <- as.numeric(s2) * solve(t(X) %*% X)
+
+# standard errors
+sqrt(diag(V))
+\end{lstlisting}
+\end{solution}
+
+\item Re-estimate the standard errors using bootstrapping and jackknife estimation.
+
+\begin{solution}
+\begin{lstlisting}
+# function to estimate model one time
+once <- function(X, y) {
+    b <- solve(t(X) %*% X) %*% t(X) %*% y
+    fitted <- X %*% b
+    e <- fitted - y
+    df <- nrow(X) - length(b)
+    s2 <- (t(e) %*% e) / df
+    V <- as.numeric(s2) * solve(t(X) %*% X)
+    sqrt(diag(V))
+}
+
+# bootstrap
+n <- 5000
+bootmat <- matrix(numeric(), ncol = 3, nrow = n)
+for(i in 1:n) {
+    s <- sample(1:nrow(X), nrow(X), TRUE)
+    Xtmp <- X[s,]
+    ytmp <- y[s]
+    tried <- try(once(Xtmp, ytmp))
+    if(!inherits(tried, 'try-error'))
+        bootmat[i,] <- tried
+}
+colMeans(bootmat, na.rm = TRUE)
+
+# jackknife
+jackmat <- matrix(numeric(), ncol = 3, nrow = nrow(X))
+for(i in 1:nrow(X)) {
+    Xtmp <- X[-i,]
+    ytmp <- y[-i]
+    tried <- try(once(Xtmp, ytmp))
+    if(!inherits(tried, 'try-error'))
+        jackmat[i,] <- tried
+}
+colMeans(jackmat, na.rm = TRUE)
+\end{lstlisting}
+\end{solution}
+
+
+
+
+\clearpage
+\section{Logistic Regression}
+
+\begin{lstlisting}
+d <- rio::import("http://www.qogdata.pol.gu.se/data/qog_bas_cs_jan15.csv")
+f <- chga_demo ~ al_ethnic + I(log(wdi_landarea)) + 
+                 I(gle_cgdpc/1e4) + I(ross_oil_netexpc/1e3)
+m <- glm(f, data = d, family = binomial(link='logit'))
+summary(m)
+
+Coefficients:
+                         Estimate Std. Error z value Pr(>|z|)    
+(Intercept)               1.12098    1.23113   0.911  0.36254    
+al_ethnic                -0.65237    0.78767  -0.828  0.40754    
+I(log(wdi_landarea))     -0.07898    0.09936  -0.795  0.42671    
+I(gle_cgdpc/10000)        0.62738    0.19735   3.179  0.00148 ** 
+I(ross_oil_netexpc/1000) -0.53886    0.14583  -3.695  0.00022 ***
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 222.55  on 163  degrees of freedom
+Residual deviance: 187.17  on 159  degrees of freedom
+  (29 observations deleted due to missingness)
+\end{lstlisting}
+
+
+\item Represent the likelihood function for logistic regression as an R function (or Stata function). The formula for the likelihood function is:
+
+$\sum_{i=1}^{n} y_i X\beta - X\beta - log(1 + e^{-X \beta})$
+
+\begin{solution}
+\begin{lstlisting}
+logitll <- function(beta, outcome, covariates){
+  xb <- covariates %*% beta
+  sum(outcome * xb - xb - log(1 + exp(-xb)))
+}
+\end{lstlisting}
+\end{solution}
+
+
+\item Estimate coefficients for the logistic regression model using two methods of maximum likelihood estimation: (a) a grid search and (b) an optimization algorithm (in R: \texttt{optim}).
+
+\begin{solution}
+\begin{lstlisting}
+# grid search
+
+
+
+# optimization algorithm
+opt <- optim(par = rep(0, ncol(votes[,2:4]) + 1),
+             fn = logit.ll,
+             covariates = votes[,2:4],
+             outcome = votes$incwin,
+             control = list(fnscale = -1),
+             hessian = T,
+             method = "BFGS")
+\end{lstlisting}
+\end{solution}
+
+\item Using \texttt{optim}, obtain the standard errors as the diagonal of the matrix inverse of the negative hessian matrix.
+
+\begin{solution}
+\begin{lstlisting}
+
+\end{lstlisting}
+\end{solution}
+
+\item Compute average predicted probabilities of observing the outcome from your estimated coefficients.
+
+\begin{solution}
+\begin{lstlisting}
+odds <- as.numeric(exp(X %*% b))
+prprob <- odds/(1+odds)
+mean(prprob)
+\end{lstlisting}
+\end{solution}
+
+
+\end{enumerate}
+
+
+\end{document}

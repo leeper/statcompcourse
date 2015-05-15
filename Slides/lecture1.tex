@@ -2,6 +2,11 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{setspace}
 \usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{listings}
+    \lstset{basicstyle=\singlespacing\footnotesize\ttfamily}
+
+\newcommand{\matr}[1]{\mathbf{#1}}
 
 \title{Matrix Operations and Functions}
 \author{Thomas J. Leeper}
@@ -15,20 +20,176 @@
 
 \section{R Basics}
 
-% objects
-% object classes
-% vectors
-% vector indexing (positional, logical)
-  % vectorization/vector operations
-  % recycling
-% coercion
-% data.frames
-% data I/O
 
+\begin{itemize}
+
+\item Objects, naming, classes
+
+\begin{lstlisting}
+x <- 1
+x = 1
+logical()
+integer()
+numeric()
+character()
+factor()
+class(1L)
+\end{lstlisting}
+
+\item basic math
+
+\begin{lstlisting}
+2 + 2
+1 - 3
+4 * 5
+6 / 3
+2 ^ 2
+
+# precedence
+2 + 3 * 4
+3 * 4 + 2
+(2 + 3) * 4
+2 + (3 * 4)
+\end{lstlisting}
+
+
+
+\item vectors
+
+\begin{lstlisting}
+c(1,2,3)
+1:3
+c(1,3:4)
+
+c(TRUE, FALSE)
+
+c(1L, 2L)
+
+# missing values
+NA
+
+c(1,NA)
+c(NA,TRUE)
+
+NULL
+
+c(1,NULL,3)
+\end{lstlisting}
+
+\item coercion
+
+\begin{lstlisting}
+as.numeric(TRUE)
+as.integer(TRUE)
+as.logical(1)
+as.logical(-1)
+as.logical(3)
+as.integer(1.5)
+\end{lstlisting}
+
+\item logicals and boolean operations
+
+\begin{lstlisting}
+TRUE | TRUE
+TRUE | FALSE
+FALSE | FALSE
+TRUE & TRUE
+TRUE & FALSE
+FALSE & FALSE
+
+!TRUE
+!FALSE
+
+TRUE | 1L
+FALSE | 1L
+TRUE | 0L
+
+TRUE + TRUE
+TRUE - FALSE
+
+TRUE - (2*TRUE)
+
+
+# equality
+1 == 1
+1 == 1L
+TRUE == 1L
+2 == 3
+2 == TRUE
+
+1 != 1
+1 != 0
+TRUE != 3
+
+4 %in% 1:5
+3:5 %in% c(2,4,6)
+!3:5 %in% c(2,4,6)
+\end{lstlisting}
+
+
+
+\item vector indexing (positional, logical)
+
+\begin{lstlisting}
+x <- letters
+x[1]
+x[2]
+x[1:3]
+x[c(1,3,5)]
+
+# seq
+seq_along(x)
+seq(1,5)
+
+# rep
+rep(1, 3)
+rep(1:2, times = 3)
+rep(1:2, each = 3)
+
+# indexing beyond range
+c(1,3,5)[2]
+c(1,3,5)[4]
+
+# negative indexing
+c(1,3,5)[-1]
+
+# vectorized operations
+(1:3) + 1
+# but remember precedence:
+1:3 * 2
+1:(3 * 2)
+1:3[2]
+(1:3)[2]
+
+# recycling
+1:4 + 1:2
+1:3 + 1:2
+
+\end{lstlisting}
+
+
+\item lists
+
+
+\item data.frames
+
+
+\item data I/O
+
+\end{itemize}
+
+
+
+\clearpage
 \section{Matrices}
 
-% OLS in matrix notation (only show the matrix representation, not the R solution)
-  % show the formula for variance-covariance matrix
+\begin{equation}
+\begin{bmatrix}
+  -1 & 3 \\
+  2 & -4
+\end{bmatrix}
+\end{equation}
+
 
 % matrices
   % square matrix
@@ -36,43 +197,301 @@
   % identity matrix
   % row and column vectors
   % representaton of data as a matrix
+
+\begin{lstlisting}
+matrix(1:6)
+matrix(1:6,nrow=2)
+matrix(1:6,ncol=3)
+matrix(1:6,nrow=2, ncol=3)
+matrix(1:6,nrow=2, ncol=3, byrow=TRUE)
+
+a <- matrix(1:10,nrow=2)
+length(a)
+nrow(a)
+ncol(a)
+dim(a)
+
+
+rbind(1:3,4:6,7:9)
+cbind(1:3,4:6,7:9)
+
+
+# transpose
+t(rbind(1:3,4:6,7:9))
+
+\end{lstlisting}
+
+
+special matrices
+
+\begin{lstlisting}
+# identity matrix
+diag(3)
+
+# row vector
+matrix(1:5, nrow = 1)
+
+# column vector
+matrix(1:5, ncol = 1)
+\end{lstlisting}
+
+
+
+
 % matrix indexing
+  % diag
+
+\begin{lstlisting}
+b <- rbind(1:3,4:6,7:9)
+b[1,]	#' first row
+b[,1]	#' first column
+b[1,1]	#' element in first row and first column
+
+# vector (positional) indexing
+b[1:2,]
+b[1:2,2:3]
+
+# negative indexing
+b[-1,2:3]
+
+# logical indexing
+b[c(TRUE,TRUE,FALSE),]
+b[,c(TRUE,FALSE,TRUE)]
+
+
+# diag
+diag(b)
+upper.tri(b)	#' upper triangle
+b[upper.tri(b)]
+lower.tri(b)	#' lower triangle
+b[lower.tri(b)]
+\end{lstlisting}
+
+
+
+
+Representing data as a matrix:
+
+\begin{lstlisting}
+# design matrix is 1 observation per row, one variable per column
+
+
+# interactions
+
+
+# categorical variables
+
+
+# power terms, etc.
+
+
+# intercept
+
+
+\end{lstlisting}
+
+
+
+
+
 % matrix operations
   % algebra
-    % scalar operations (addition, subtraction, multiplication, division)
     % conformability
     % matrix multiplication
       % vector multiplication (dot product)
       % multiplication by an identity matrix
       % symmetric matrices
-      % additivie property (X + Y)' = X' + Y'
-  % transpose
-  % inversion
-    % invertability
-    % QR decomposition
+      % additivity property (X + Y)' = X' + Y'
+
+\begin{lstlisting}
+# scalar addition/subtraction
+a <- matrix(1:6, nrow=2)
+a + 1
+a - 1
+a + 1:2
+a - 1:2
+
+# scalar multiplication/division
+a * 2
+a / 2
+a * 1:2
+a / 1:2
+\end{lstlisting}
 
 
+
+
+% OLS in matrix notation (only show the matrix representation, not the R solution)
+  % show the formula for variance-covariance matrix
+
+\begin{align*}
+\matr{y} = \matr{X} \matr{b} + \matr{e}
+\end{align*}
+
+We need to minimize the sum of squared residuals.
+
+\begin{align*}
+\matr{y} & = \matr{X} \matr{b} + \matr{e}\\
+\matr{e} & = \matr{y} - \matr{X} \matr{b}
+\end{align*}
+
+\begin{align*}
+S(\matr{b}) & = \matr{e}'\matr{e}\\
+  & = (\matr{y} - \matr{X} \matr{b})'(\matr{y} - \matr{X} \matr{b})\\
+  & = \matr{y}'\matr{y} - \matr{y}'\matr{X}\matr{b} - \matr{b}'\matr{X}'\matr{y} + \matr{b}'\matr{X}'\matr{X}\matr{b}\\
+  & = \matr{y}'\matr{y} - 2\matr{y}'\matr{X}\matr{b} + \matr{b}'\matr{X}'\matr{X}\matr{b}
+\end{align*}
+
+Last step above is because $\matr{b}'\matr{X}'\matr{y}$ is 1x1, thus equal to its own transpose. To minimize, we set differentiate $S(\matr{b})$, set to 0, and solve for $b$.
+
+\begin{align*}
+\dfrac{\partial S(b)}{\partial b} & = 0 - 2\matr{X}'\matr{y} + 2 \matr{X}'\matr{X}\matr{b}\\
+0 & = - 2\matr{X}'\matr{y} + 2 \matr{X}'\matr{X}\matr{b}\\
+2\matr{X}'\matr{y} & = 2 \matr{X}'\matr{X}\matr{b}\\
+\matr{X}'\matr{y} & = \matr{X}'\matr{X}\matr{b}\\
+(\matr{X}'\matr{X})^{-1} \matr{X}'\matr{y} & = \matr{b}\\
+\end{align*}
+
+If we assume $\matr{y}$ is a linear function of $\matr{X}\matr{b}$, then $\matr{b}$ is an unbiased estimator of $\matr{\beta}$ (i.e., $E(\matr{b}) = \matr{\beta}$). Then variance of our coefficient estimates is:
+
+\begin{align*}
+V(\matr{b}) & = \left[(\matr{X}'\matr{X})^{-1}\matr{X}'\right] V(\matr{y}) \left[(\matr{X}'\matr{X})^{-1}\matr{X}'\right] \\
+  & = \left[(\matr{X}'\matr{X})^{-1}\matr{X}'\right] \sigma^2 \matr{I}_n \left[(\matr{X}'\matr{X})^{-1}\matr{X}'\right] \\
+  & = \sigma^2 (\matr{X}'\matr{X})^{-1}\matr{X}'\matr{X}(\matr{X}'\matr{X})^{-1}\\
+  & = \sigma^2 (\matr{X}'\matr{X})^{-1}\\
+\end{align*}
+
+Note assumptions of constant error variance. Other types of standard errors would replace $V(y)$ with something else.
+
+
+
+
+
+
+
+
+
+matrix multiplication
+
+\begin{lstlisting}
+mmdemo <- function(A,B){
+    m <- nrow(A)
+    n <- ncol(B)
+    C <- matrix(NA,nrow=m,ncol=n)
+    for(i in 1:m) {
+        for(j in 1:n) {
+            C[i,j] <- paste('(',A[i,],'*',B[,j],')',sep='',collapse='+')
+        }
+    }
+    print(C, quote=FALSE)
+}
+
+# conformability
+
+
+# multiplication
+
+
+# dimension of output
+
+\end{lstlisting}
+
+
+
+
+matrix inversion
+
+% definition
+
+% invertability
+
+% processes of inverting
+
+% easier/harder to invert
+
+% QR decomposition
+
+
+
+
+
+
+
+
+\clearpage
 \section{Formulae}
 
 
+I() notation
+
+
+
+
+\clearpage
 \section{Functions}
 
-% built-in functions
-  % mean
-  % sum
-  % exp
-  % log
-  % sqrt
-  % diag
-  % length
+\begin{itemize}
 
-% writing functions
-  % functions with no arguments
-  % functions with one argument
-  % functions with optional and default arguments
+\item built-in functions
+
+\begin{lstlisting}
+x <- c(1,3,4,4,5,6,2,3,4)
+mean(x)
+sum(x)
+exp(x)
+log(x)
+sqrt(x)
+length(x)
+seq_along(x)
+\end{lstlisting}
+
+\item writing functions
+
+
+\begin{lstlisting}
+# no arguments
+f <- function() 2
+f
+f()
+f <- function() 'hello world'
+f()
+
+# one argument
+f <- function(x) {
+    x^2
+}
+f(2)
+f <- function(x) {
+    (1:5)^(x)
+}
+f(3)
+
+# default argument
+f <- function(x = 2) {
+    x^2
+}
+f()
+f(2)
+f(3)
+
+# multiple arguments
+f <- function(x,y) {
+    x - y
+}
+
+# return values
+f <- function(x) {
+    y <- combn(x, 2)
+    min(colSums(y))
+}
+
+\end{lstlisting}
 
 % argument recycling, again
 
 % generics and method dispatch
+
+\end{itemize}
+
 
 \end{document}

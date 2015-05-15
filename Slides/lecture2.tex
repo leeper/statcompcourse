@@ -1,7 +1,10 @@
-\documentclass[a4paper,11pt]{article}
+\documentclass[a4paper,12pt]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage{setspace}
 \usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{listings}
+    \lstset{basicstyle=\singlespacing\footnotesize\ttfamily}
 
 \title{Programming Basics}
 \author{Thomas J. Leeper}
@@ -11,38 +14,230 @@
 
 \maketitle
 
+\doublespacing
 
-\begin{document}
 
+\clearpage
+\section{Repeated Operations}
+
+Looping: \texttt{for}
+
+\begin{lstlisting}
+for(i in c(1,2,3)) {
+    print(i)
+}
+
+x <- numeric(3)
+for(i in seq_along(x)) {
+    x <- i * 2
+}
+\end{lstlisting}
+
+
+
+Looping: \texttt{while}
+
+\begin{lstlisting}
+x <- TRUE
+i <- 0
+while(x) {
+    i <- i + 1
+    print(i)
+    if(i == 10)
+        break
+}
+\end{lstlisting}
+
+
+\texttt{apply} and \texttt{*apply}
+
+
+\begin{lstlisting}
+mean(1:5) # vectorized
+lapply(1:5, mean)
+sapply(1:5, mean)
+
+m <- matrix(1:16, nrow = 4)
+apply(m, 1, sum)
+apply(m, 2, sum)
+\end{lstlisting}
+
+
+\texttt{replicate}
+
+\begin{lstlisting}
+rnorm(1) + rnorm(1)
+replicate(5, rnorm(1) + rnorm(1))
+\end{lstlisting}
+
+
+
+random numbers and \texttt{sample}
+
+\begin{lstlisting}
+rnorm(1)
+rnorm(5)
+rnorm(5, mean = 3, sd = 2)
+rpois(5, 3)
+
+# sample
+sample(2:6, 1)
+sample(2:6, 5)
+sample(2:6, 10, TRUE)
+\end{lstlisting}
+
+
+
+\clearpage
 \section{Simulation Methods}
 
 
-% bootstrap
-
-% jackknife
 
 % monte carlo
 
-\section{Repeated Operations}
-
-% looping
-
-% `replicate`
-
-% `apply` and `*apply`
 
 
+\begin{lstlisting}
+set.seed(1)
+x <- rnorm(1e6, 5, 1)
+mean(x)
+s1 <- sample(x, 10, FALSE)
+mean(s1)
 
-% `sample`
+s2 <- sample(x, 1e3, FALSE)
+mean(s2)
+
+r1 <- replicate(1000, mean(sample(x, 10, FALSE)))
+r2 <- replicate(1000, mean(sample(x, 1e3, FALSE)))
+mean(r1)
+mean(r2)
+sd(r1)
+sd(r2)
+\end{lstlisting}
+
+Bootstrap
+
+Useful for estimating variance/SD/SE for estimators that do not have a closed form variance calculation. Example: median.
+
+\begin{lstlisting}
+set.seed(1)
+x1 <- rnorm(1e6, 5, 1)
+mean(x1)
+median(x1)
+
+s <- sample(x1, 1e3, FALSE)
+mean(s)
+median(s)
+
+b <- replicate(1000, mean(sample(s, 1e3, TRUE)))
+mean(b) # mean of bootstrapped means
+sd(b) # sd of bootstrapped means
+quantile(b, c(0.025,0.975)) # 95 % CI for mean
+
+b <- replicate(1000, median(sample(s, 1e3, TRUE)))
+mean(b) # mean of bootstrapped medians
+sd(b) # sd of bootstrapped medians
+quantile(b, c(0.025,0.975)) # 95 % CI for median
 
 
+# another distribution
+x2 <- rgamma(1e6, 1)
+
+\end{lstlisting}
+
+
+Jackknife
+
+\begin{lstlisting}
+set.seed(1)
+x1 <- rnorm(1e6, 5, 1)
+s <- sample(x1, 1e3, FALSE)
+
+mean(s)
+j <- numeric(length(s))
+for(i in seq_along(s)) j[i] <- mean(s[-i])
+mean(s)
+sd(s)
+quantile(s, c(0.025, 0.975))
+
+\end{lstlisting}
+
+
+
+\clearpage
 \section{Optimization}
+
+Likelihood function:
+\begin{align*}
+L(\pi|data) & = Pr(data|\pi) = \pi^x(1-\pi)^{n-x}
+\end{align*}
+
+Log likelihood function:
+
+\begin{align*}
+ln(L(\pi)) & = x \ln(\pi) + (n-x) \ln(1-\pi)
+\end{align*}
+
+\begin{lstlisting}
+# maximize
+ll <- function(x, heads, n) {
+  heads*log(x) + (n-heads)*log(1-x)
+}
+optimize(ll, interval = c(0,1), heads = 7, n = 10, maximum = TRUE)
+optimize(ll, interval = c(0,1), heads = 3, n = 10, maximum = TRUE)
+
+# minimize
+negll <- function(x, heads, n) {
+  -(heads*log(x) + (n-heads)*log(1-x))
+}
+optimize(negll, interval = c(0,1), heads = 7, n = 10)
+optim(p = 0.5, negll, gr = NULL, heads = 7, n = 10, lower = 0, upper = 1, method = 'Brent')
+\end{lstlisting}
+
+
+Talk about how log-likelihood is much more reliable when using floating-point computations because small numbers multiplied by each other go to zero (beyond the precision of most computers)
+
+
+
+
+
+
+
+\textit{Score} function is the derivative of the log likelihood:
+
+\begin{align*}
+\dfrac{d\ln L(\pi)}{d\pi} & = \dfrac{x}{\pi} + (n-x) \dfrac{1}{1-\pi}(-1)\\
+& = \dfrac{x}{\pi} - \dfrac{n-x}{1-\pi}
+\end{align*}
+
+Solve for parameter $\pi$ to find the maximum likelihood estimate:
+
+\begin{align*}
+\dfrac{d\ln L(\pi)}{d\pi} & = \dfrac{x}{\pi} - \dfrac{n-x}{1-\pi}\\
+0 & = \dfrac{x}{\pi} - \dfrac{n-x}{1-\pi}\\
+\dfrac{n-x}{1-\pi} & = \dfrac{x}{\pi}\\
+\pi(n-x) & = x(1-\pi)\\
+n\pi - x\pi & = x - x\pi\\
+n\pi & = x\\
+\pi & = \dfrac{x}{n}
+\end{align*}
+
 
 % grid search
 
-% gradient descent
-
 % `optim`
+\begin{lstlisting}
+p <- function(x, n) {
+  x/n
+}
+
+\end{lstlisting}
+
+
+
+
+
+
   % hessian
 
 

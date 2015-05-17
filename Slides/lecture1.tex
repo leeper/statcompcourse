@@ -222,7 +222,10 @@ t(rbind(1:3,4:6,7:9))
 \end{lstlisting}
 
 
-special matrices
+Manually calculate the transpose of a matrix
+
+
+Some special matrices:
 
 \begin{lstlisting}
 # identity matrix
@@ -397,21 +400,117 @@ mmdemo <- function(A,B){
 \end{lstlisting}
 
 
+Multiplication of an upper triangular matrix is nice because of lots of zeros.
 
 
-matrix inversion
 
-% definition
 
-% invertability
+
+\subsection{Matrix inversion}
+
+Given a square matrix $\matr{A}$, if it is invertible, another matrix $\matr{B}$ exists such that:
+
+\begin{align*}
+\matr{A}^{-1} & = \matr{B}\\
+\matr{A}\matr{B} & = \matr{A}\matr{A}^{-1} = \matr{I}\\
+\end{align*}
+
+Also important is how matrix multiplication and matrix inversion work together:
+
+\begin{align*}
+\matr{B}^{-1}\matr{A}^{-1}\matr{A}\matr{B} = \matr{B}^{-1}\matr{I}\matr{B} = \matr{B} = \matr{A}\matr{B}\matr{B}^{-1}\matr{A}^{-1}\\
+(\matr{A}\matr{B})^{-1} = \matr{B}^{-1}\matr{A}^{-1}
+\end{align*}
+
+Note how the order of the terms in the product are reversed by inversion.
+
+Inverse of transpose is the transpose of the inverse.
+
+% talk about full rank
+
+
+An \textbf{invertible} matrix has an inverse. This is also called a \textbf{nonsingular} matrix. A matrix that does not have an inverse is \textbf{noninvertible} or \textbf{singular}.
 
 % processes of inverting
 
-% easier/harder to invert
+\begin{equation*}
+\begin{bmatrix}
+ a & b \\
+ c & d \\
+\end{bmatrix}^{-1} = 
+\dfrac{1}{ad-bc}
+\begin{bmatrix}
+ d & -b \\
+ -c & a \\
+\end{bmatrix}
+\end{equation*}
 
-% QR decomposition
+
+An example (of a 2x2 matrix):
+
+\begin{equation*}
+\begin{bmatrix}
+ 1 & -1 \\
+ 1 & 2 \\
+\end{bmatrix}^{-1} = 
+\dfrac{1}{(1*2)-(1*-1)}
+\begin{bmatrix}
+ 2 & -(-1) \\
+ -(1) & 1 \\
+\end{bmatrix}
+\end{equation*}
 
 
+% add another example or two here
+
+
+
+Formula for larger matrices is more complex. For a 3x3 matrix:
+
+\begin{equation*}
+\mathbf{A}^{-1} = \begin{bmatrix}
+a & b & c\\ d & e & f \\ g & h & i\\
+\end{bmatrix}^{-1} =
+\frac{1}{\det(\mathbf{A})} \begin{bmatrix}
+\, A & \, B & \,C \\ \, D & \, E & \, F \\ \, G & \, H & \, I\\
+\end{bmatrix}^T =
+\frac{1}{\det(\mathbf{A})} \begin{bmatrix}
+\, A & \, D & \,G \\ \, B & \, E & \,H \\ \, C & \,F & \, I\\
+\end{bmatrix}
+\end{equation*}
+
+The determinant for a 2x2 is $ad-bc$. For a 3x3 it is more complex. It requires extracting the \textbf{minors} of the matrix and multiplying the first-row value of the matrix times the determinant of each minor, summed using \textbf{cofactors} (alternating +1 and -1 matrix).
+
+\texttt{det} determines the determinant of a matrix
+
+Special case: determinant of a triangular matrix is just the product of the diagonal entries. A triangular matrix is only singular if any of the diagonals are zero.
+
+Not all square matrices are invertible. (Non-square matrices do not have inverses.) Is not invertible if its determinant is zero. When does this occur? It is if-and-only-if if either the columns (or rows) are linear functions of each other.
+
+
+In practice, we rarely invert matrices. Instead, we use a decomposition. Common decompositions are Cholesky, LU, and QR. The \textbf{QR decomposition} is used by most regression solving algorithms. It decomposes $\matr{X}$ into two matrices, $\matr{Q}\matr{R}$, where $\matr{Q}$ is an m-by-n \textit{orthonormal} matrix and $\matr{R}$ is an m-by-m upper-triangular matrix.
+
+An \textit{orthnormal} matrix has the nice property: $\matr{M}'\matr{M} = \matr{I}$. (Note: the matrix times its transpose is $\matr{I}$, whereas the general result is that a matrix times its inverse is the identity matrix. So, an orthonormal matrix has an inverse equal to its transpose.)
+
+\begin{align*}
+\matr{\beta} & = (\matr{X}'\matr{X})^{-1}\matr{X}'\matr{y} \\
+(\matr{Q}\matr{R})'\matr{Q}\matr{R}\matr{\beta} & = (\matr{Q}\matr{R})'\matr{y} \\
+\matr{R}'\matr{Q}'\matr{Q}\matr{R}\matr{\beta} & = \matr{R}'\matr{Q}'\matr{y} \\
+\matr{R}'\matr{R}\matr{\beta} & = \matr{R}'\matr{Q}'\matr{y} \\
+\matr{\beta} & = \matr{R}^{-1}\matr{Q}'\matr{y}\\
+\end{align*}
+
+So we just have to invert the $\matr{R}$ upper-triangular matrix, which is easier. The inverse $\matr{R}^{-1}$ is also upper-triangular, which is easier to multiply.
+
+We won't go over the details of the decomposition, but know that while we talk about estimating OLS using the full matrix notation, in practice we estimate it using a QR decomposition.
+
+
+\begin{lstlisting}
+QR <- qr(X)
+R <- qr.R(QR)
+solve(R) # inverse of the R matrix
+Q <- qr.Q(QR)
+\end{lstlisting}
 
 
 
@@ -423,7 +522,10 @@ matrix inversion
 
 
 I() notation
+factor() notation
 
+
+Estimating regression models using \texttt{lm} and \texttt{glm}
 
 
 
@@ -489,7 +591,9 @@ f <- function(x) {
 
 % argument recycling, again
 
-% generics and method dispatch
+
+
+
 
 \end{itemize}
 

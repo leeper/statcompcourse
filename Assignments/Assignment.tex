@@ -1,13 +1,15 @@
-\documentclass[a4paper,11pt]{article}
+\documentclass[a4paper,12pt]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage{setspace}
 \usepackage{hyperref}
 \usepackage{listings}
     \lstset{basicstyle=\singlespacing\footnotesize\ttfamily}
+\usepackage{amsmath}
 \usepackage{comment}
     \excludecomment{solution}
     %\includecomment{solution}
 \newcommand{\matr}[1]{\mathbf{#1}}
+\newcommand{\lik}{\mathcal{L}}
 
 \title{Regression Computation Assignment}
 \author{}
@@ -15,93 +17,175 @@
 
 \begin{document}
 
+\vspace{-5em}
+
 \maketitle
+
+\vspace{-3em}
+
+{\begin{center}\textit{\textbf{The assignment is due on Thursday June 4 at 23:59.}}\end{center}}
 
 {\onehalfspacing
 
-\section*{Purpose}
+\section*{Purpose and Overview}
 
-The purpose of this assignment is for you to demonstrate your understanding of the mathematics and computational procedures involved in the estimation of basic regression models. Below are several regression models. The first two (\texttt{m1} and \texttt{m2}) are models explaining life expectancy as a function of several covariates. The reported coefficient estimates were obtained using ordinary least squares (OLS) regression analysis using R's \texttt{lm} function. The third (\texttt{m3}) is a model explaining democracy as a function of several covariates, estimated using logistic regression via R's \texttt{glm} function. All data are drawn from the Quality of Government Basic Dataset. The data and codebook are available here: \url{http://qog.pol.gu.se/data/datadownloads/qogbasicdata}.
+The purpose of this assignment is for you to demonstrate your understanding of the mathematics and computational procedures involved in the estimation of basic regression models. Below are several regression models. The first two (\texttt{m1} and \texttt{m2}) are models explaining life expectancy and the latter two (\texttt{m3} and \texttt{m4}) are models explaining democracy. All data are drawn from the Quality of Government Basic Dataset. The data and codebook are available here: \url{http://qog.pol.gu.se/data/datadownloads/qogbasicdata}.
 
-\section*{Overview}
+\begin{lstlisting}
+d <- rio::import("http://www.qogdata.pol.gu.se/data/qog_bas_cs_jan15.csv")
 
-Your task is to reproduce parts of these analyses using R (or Stata), without the use of the \texttt{lm}, \texttt{glm}, \texttt{lm.fit}, or similar ready-made functions (or, for Stata, without the use of \texttt{reg}, \texttt{logit}, \texttt{glm}, or similar commands). The instructions below outline the code you should produce. You may use R (based on techniques from lecture) or Stata (for relevant technical details on Stata, see Ch. 11 and Appendix A from Cameron and Trivedi 2010).
+f1 <- une_leb ~ I(gle_cgdpc/1e4) + I(ross_oil_netexpc/1e3)
+m1 <- lm(f1, data = d)
+
+f2 <- une_leb ~ I(gle_cgdpc/1e4)*factor(chga_demo) + 
+                I(ross_oil_netexpc/1e3) + factor(ht_colonial)
+m2 <- lm(f2, data = d)
+
+f3 <- chga_demo ~ al_ethnic
+m3 <- glm(f3, data = d, family = binomial(link='logit'))
+
+f4 <- chga_demo ~ al_ethnic + I(log(wdi_landarea)) + 
+                  I(gle_cgdpc/1e4) + I(ross_oil_netexpc/1e3)
+m4 <- glm(f4, data = d, family = binomial(link='logit'))
+\end{lstlisting}
+
+\vspace{1em}
+\noindent Your task is to reproduce parts of these analyses using R (or Stata), without the use of the \texttt{lm}, \texttt{glm}, \texttt{lm.fit}, or similar ready-made functions (or, for Stata, without the use of \texttt{reg}, \texttt{logit}, \texttt{glm}, or similar commands). The instructions below outline the code you should produce. You may use R (based on techniques from lecture) or Stata (for relevant technical details on Stata, see Ch. 11 and Appendix A from Cameron and Trivedi 2010).
 }
 
 \section*{Submitting Your Assignment}
 
 \noindent Submit your assignment via email to Thomas (\url{mailto:tleeper@ps.au.dk}) in the form of a single, complete R syntax file (.R) or Stata (.do) file in your submitted assignment. Each step of the code should be numbered (in the form of a comment) according to the numbering of the tasks. You do not need to explain, describe, or present the output of any analyses.
 
-\vspace{1em}
-\noindent The assignment is due on Thursday June 4 at 11:59.
 
+\clearpage
+
+\doublespacing
 
 \begin{enumerate}
 
-\clearpage
 \section{Ordinary Least Squares Regression}
 
-\begin{lstlisting}
-d <- rio::import("http://www.qogdata.pol.gu.se/data/qog_bas_cs_jan15.csv")
-f1 <- une_leb ~ I(gle_cgdpc/1e4) + chga_demo + I(ross_oil_netexpc/1e3)
-m1 <- lm(f1, data = d)
-
-f2 <- une_leb ~ I(gle_cgdpc/1e4)*factor(chga_demo) + 
-               I(ross_oil_netexpc/1e3) + factor(ht_colonial)
-m2 <- lm(f2, data = d)
-\end{lstlisting}
-
-\item Extract the $\matr{R}$ matrix from the $\matr{Q}\matr{R}$ decomposition of model \texttt{m1}. Manually invert this matrix using the formula given in class for a 3-by-3 matrix.
-
-\item Construct an appropriate design matrix for \texttt{m2} (as represented by formula \texttt{f2}) from the original variables in the dataset, including the specified categorical (factor) variables and interaction term. (See Fox p.153--154.)
+\item Construct a design matrix $\matr{X}$ for \texttt{m1}. Extract the $\matr{R}$ matrix from the $\matr{Q}\matr{R}$ decomposition of the design matrix for model \texttt{m1}. Write R code to manually invert this matrix using the formula given in class for the inverse of a 3-by-3 matrix.
 
 \begin{solution}
 \begin{lstlisting}
+# Design matrix
+dat <- cbind(1, d$gle_cgdpc/1e4, d$ross_oil_netexpc/1e3)
+cc <- complete.cases(dat)
+X <- dat[cc,]
 
-library('rio')
+# QR decomposition
+QR <- qr(X)
+R <- qr.R(QR)
+R
 
-#model.matrix(~ 0 + factor(mtcars$cyl))
+# inverse of the R matrix, manually
+matrix(c(R[2,2] * R[3,3] - R[2,3] * R[3,2],
+         -(R[2,1] * R[3,3] - R[2,3] * R[3,1]),
+         R[2,1] * R[3,2] - R[2,2] * R[3,1],
+         -(R[1,2] * R[3,3] - R[1,3] * R[3,2]),
+         R[1,1] * R[3,3] - R[1,3] * R[3,1],
+         -(R[1,1] * R[3,2] - R[1,2] * R[3,1]),
+         R[1,2] * R[2,3] - R[1,3] * R[2,2],
+         -(R[1,1] * R[2,3] - R[1,3] * R[2,1]),
+         R[1,1] * R[2,2] - R[1,2] * R[2,1]), nrow = 3) * (1/det(R))
 
+# check inverse of the R matrix, automatically
+solve(R)
+\end{lstlisting}
+\end{solution}
+
+\item Create a vector \texttt{y} to represent the outcome. Then construct an appropriate design matrix $\matr{X}$ for \texttt{m2} (as represented by formula \texttt{f2}) from the original variables in the dataset, including the specified categorical (factor) variables and interaction term. (See Fox p.153--154.)
+
+\begin{solution}
+\begin{lstlisting}
+# define `y`
+y <- d$une_leb
+
+# call `model.matrix` directly to create design matrix:
+X <- model.matrix(f2, data = d)
+
+# manual alternative:
+x1 <- d$gle_cgdpc/10000
+x2 <- d$chga_demo
+x3 <- x1*x2
+x4 <- d$ross_oil_netexpc/1000
+u <- sort(unique(d$ht_colonial))
+x5 <- matrix(NA, nrow = nrow(d), ncol = length(u))
+for(i in seq_along(u)) {
+    x5[,i] <- as.numeric(d$ht_colonial == u[i])
+}
+dat <- cbind(y, 1, x1, x2, x3, x4, x5)
+cc <- complete.cases(dat)
+X <- dat[cc, -1]
+colnames(X) <- c('Intercept', 'gle_cgdpc', 'chga_demo', 'gle_cgdpc*chga_demo', 'ross_oil_netexpc',
+                 paste0('ht_colonial', u))
+X <- X[, !colnames(X) %in% c('ht_colonial0', 'ht_colonial9')] # drop linearly dependent columns
+
+# pass complete cases to `y`
+y <- dat[cc, 1]
 \end{lstlisting}
 \end{solution}
 
 
-\item Estimate the Ordinary Least Squares (OLS) coefficients in \texttt{m2} using matrix notation (see Fox p.155). You may use a QR decomposition in lieu of \texttt{solve} for matrix inversion if you so choose.
+\item Estimate the Ordinary Least Squares (OLS) coefficients in \texttt{m2} using matrix notation (see Fox p.155). You may use a QR decomposition if you so choose.
 
 \begin{solution}
 \begin{lstlisting}
 # using standard matrix notation (X'X)^{-1}X'y
-solve(t(X) %*% X) %*% t(X) %*% y
+beta <- solve(t(X) %*% X) %*% t(X) %*% y
+beta
 
 # using a QR decomposition
 decomp <- qr(X)
-solve(qr.R(decomp)) %*% t(qr.Q(decomp)) %*% y
+beta <- solve(qr.R(decomp)) %*% t(qr.Q(decomp)) %*% y
+beta
 \end{lstlisting}
 \end{solution}
 
-\item Obtain the fitted values, $\hat{y}$, from \texttt{m2} for a new observation that takes on the following values:
+\item Obtain the fitted values (where $\matr{\hat{y}} = \matr{X}\matr{\hat{\beta}}$), from model \texttt{m2} for a new observation that takes on the following values:
 
 \begin{itemize}
-\item \texttt{gle_cgdpc} = 10000
-\item \texttt{chga_demo} = 1
-\item \texttt{ross_oil_netexpc} = 1000
-\item \texttt{ht_colonial} = 0
+\item \texttt{gle\_cgdpc} = 10000
+\item \texttt{chga\_demo} = 1
+\item \texttt{ross\_oil\_netexpc} = 1000
+\item \texttt{ht\_colonial} = 0
 \end{itemize}
+
+With all other variables held at their observed values.
 
 \begin{solution}
 \begin{lstlisting}
+Xtmp <- X
+Xtmp[,'gle_cgdpc'] <- 10000
+Xtmp[,'chga_demo'] <- 1
+Xtmp[,'ross_oil_netexpc'] <- 1000
+# redefine all `ht_colonial` columns:
+Xtmp[,grepl('ht_colonial',colnames(Xtmp))] <- 0
+# or manually:
+Xtmp[,'ht_colonial1'] <- 0
+Xtmp[,'ht_colonial2'] <- 0
+Xtmp[,'ht_colonial3'] <- 0
+Xtmp[,'ht_colonial4'] <- 0
+Xtmp[,'ht_colonial5'] <- 0
+Xtmp[,'ht_colonial6'] <- 0
+Xtmp[,'ht_colonial7'] <- 0
+Xtmp[,'ht_colonial8'] <- 0
+#Xtmp[,'ht_colonial9'] <- 0 # dropped previously
+Xtmp[,'ht_colonial10'] <- 0
 
+fitted <- X %*% beta
+fitted
 \end{lstlisting}
 \end{solution}
 
-\item Estimate the variance-covariance matrix of the OLS estimates for \texttt{m2} and obtain estimated standard errors. The formula for OLS variance-covariance matrix is given on Fox p.158.
+\item Estimate the variance-covariance matrix of the OLS estimates for \texttt{m2} and extract estimated standard errors from that matrix. The formula for OLS variance-covariance matrix is given on Fox p.158 and in the course notes.
 
 \begin{solution}
 \begin{lstlisting}
 # Var(beta) = S^2 (X'X)^{-1}
 # S^2 = (e'e) / (n - k - 1)
-
-fitted <- X %*% b
 e <- fitted - y
 df <- nrow(X) - length(b)
 s2 <- (t(e) %*% e) / df
@@ -114,110 +198,160 @@ sqrt(diag(V))
 \end{lstlisting}
 \end{solution}
 
+\item Use the estimated coefficients and standard errors for \texttt{m2} to obtain the \textit{t}-statistics for each coefficient estimate under a null hypothesis $H_0: \beta_k = 0$. Calculate the p-values for each test statistic using the \texttt{pt} function, which returns the value of Student's \textit{t} cumulative distribution function for a given test statistic.
+
 
 \clearpage
 \section{Logistic Regression}
 
-\begin{lstlisting}
-d <- rio::import("http://www.qogdata.pol.gu.se/data/qog_bas_cs_jan15.csv")
-f3 <- chga_demo ~ al_ethnic + I(log(wdi_landarea)) + 
-                 I(gle_cgdpc/1e4) + I(ross_oil_netexpc/1e3)
-m3 <- glm(f3, data = d, family = binomial(link='logit'))
-\end{lstlisting}
-
-
-\item Represent the likelihood function for logistic regression as an R function (or Stata function). The formula for the likelihood function is:
-
-$\sum_{i=1}^{n} y_i X\beta - X\beta - log(1 + e^{-X \beta})$
+\item Represent the log-likelihood function for logistic regression as an R function (or Stata function). Recall the general structure of the log-likelihood for a binary outcome is: 
+\begin{align*}
+\ln\lik(\beta) = \sum_{i=1}^{n} y_i \ln(\pi_i) + (1-y_i) \ln(1-\pi_i)
+\end{align*}
+where $\pi_i$ in the logistic model is given by the inverse link function $\dfrac{e^{\matr{X}_i\beta}}{1 + e^{\matr{X}_i\beta}}$.
 
 \begin{solution}
 \begin{lstlisting}
-logitll <- function(beta, outcome, covariates){
-  xb <- covariates %*% beta
-  sum(outcome * xb - xb - log(1 + exp(-xb)))
+logitll <- function(beta, y, X){
+  p <- exp(X %*% beta)/(1+exp(X %*% beta))
+  lik <- y * log(p) + (1-y) * log(1-p)
+  sum(lik)
 }
 \end{lstlisting}
 \end{solution}
 
 
-\item Estimate coefficients for \texttt{m3} using two methods of maximum likelihood estimation: (a) a grid search and (b) an optimization algorithm (in R: \texttt{optim}).
+\item Estimate the coefficients for \texttt{m3} using two methods of maximum likelihood estimation: (a) a grid search and (b) an optimization algorithm implemented by \texttt{optim}. For the grid search, search for possible slope and intercept coefficients in the range between -5 and +5.
 
 \begin{solution}
 \begin{lstlisting}
-# grid search
+dat <- cbind(d$chga_demo,1,d$al_ethnic)
+cc <- complete.cases(dat)
+Xm3 <- dat[cc,2:3]
+ym3 <- dat[cc,1]
 
-
+# grid search (could be more precise)
+iseq <- seq(-5, 5, by = 0.025)
+sseq <- seq(-5, 5, by = 0.025)
+g <- expand.grid(intercept = iseq, slope = sseq)
+gs <- apply(g, 1, function(z) logitll(beta = z, X = Xm3, y = ym3))
+g[which.max(gs), ]
 
 # optimization algorithm
-opt <- optim(par = rep(0, ncol(votes[,2:4]) + 1),
-             fn = logit.ll,
-             covariates = votes[,2:4],
-             outcome = votes$incwin,
-             control = list(fnscale = -1),
-             hessian = T,
-             method = "BFGS")
+optm3 <- optim(par = rep(0, 2),
+               fn = logitll,
+               X = Xm3,
+               y = ym3,
+               control = list(fnscale = -1),
+               hessian = TRUE,
+               method = "BFGS")
+optm3$par
 \end{lstlisting}
 \end{solution}
 
-\item Using \texttt{optim}, obtain the standard errors as the diagonal of the matrix inverse of the negative hessian matrix.
-
-\begin{solution}
-\begin{lstlisting}
-
-\end{lstlisting}
-\end{solution}
-
-
-\item Re-estimate the standard errors for \texttt{m3} using bootstrapping and jackknife estimation.
+\item Estimate the standard errors for \texttt{m3} using bootstrap estimation. 
 
 \begin{solution}
 \begin{lstlisting}
 # function to estimate model one time
 once <- function(X, y) {
-    b <- solve(t(X) %*% X) %*% t(X) %*% y
-    fitted <- X %*% b
-    e <- fitted - y
-    df <- nrow(X) - length(b)
-    s2 <- (t(e) %*% e) / df
-    V <- as.numeric(s2) * solve(t(X) %*% X)
-    sqrt(diag(V))
+    opt <- optim(par = rep(0, 2),
+                 fn = logitll,
+                 X = X,
+                 y = y,
+                 control = list(fnscale = -1),
+                 hessian = TRUE,
+                 method = "BFGS")
+    opt$par
 }
 
 # bootstrap
 n <- 5000
-bootmat <- matrix(numeric(), ncol = 3, nrow = n)
+bootmat <- matrix(numeric(), ncol = 2, nrow = n)
 for(i in 1:n) {
     s <- sample(1:nrow(X), nrow(X), TRUE)
-    Xtmp <- X[s,]
-    ytmp <- y[s]
+    Xtmp <- Xm3[s,]
+    ytmp <- ym3[s]
     tried <- try(once(Xtmp, ytmp))
     if(!inherits(tried, 'try-error'))
         bootmat[i,] <- tried
 }
-colMeans(bootmat, na.rm = TRUE)
+apply(bootmat, 2, sd, na.rm = TRUE)
 
-# jackknife
-jackmat <- matrix(numeric(), ncol = 3, nrow = nrow(X))
+# jackknife (just for fun)
+jackmat <- matrix(numeric(), ncol = 2, nrow = nrow(X))
 for(i in 1:nrow(X)) {
-    Xtmp <- X[-i,]
-    ytmp <- y[-i]
+    Xtmp <- Xm3[-i,]
+    ytmp <- ym3[-i]
     tried <- try(once(Xtmp, ytmp))
     if(!inherits(tried, 'try-error'))
         jackmat[i,] <- tried
 }
-colMeans(jackmat, na.rm = TRUE)
+apply(jackmat, 2, sd, na.rm = TRUE)
+\end{lstlisting}
+\end{solution}
+
+\item Obtain 95\% bootstrap confidence intervals for the \texttt{m3} coefficient estimates from the bootstrap distribution of the coefficients.
+
+\begin{solution}
+\begin{lstlisting}
+t(apply(bootmat, 2, quantile, probs = c(0.025,0.975), na.rm = TRUE))
+\end{lstlisting}
+\end{solution}
+
+\item Estimate the coefficients for \texttt{m4} using \texttt{optim} and obtain the standard errors as the diagonal of the matrix inverse of the negative hessian matrix.
+
+\begin{solution}
+\begin{lstlisting}
+dat <- cbind(d$chga_demo,1,d$al_ethnic, log(d$wdi_landarea), d$gle_cgdpc/1e4, d$ross_oil_netexpc/1e3)
+cc <- complete.cases(dat)
+Xm4 <- X
+ym4 <- y
+
+optm4 <- optim(par = rep(0, 5),
+               fn = logitll,
+               X = Xm4,
+               y = ym4,
+               control = list(fnscale = -1),
+               hessian = TRUE,
+               method = "BFGS")
+
+# coefficient estimates
+optm4$par
+
+# standard errors
+sqrt(diag(solve(-optm4$hessian)))
 \end{lstlisting}
 \end{solution}
 
 
-\item Compute the average predicted probability of observing the outcome  (i.e., the mean of all the predicted probability for each case in the original data) from your estimated coefficients for \texttt{m3}. (Do not use the \texttt{predict()} function, but you may wish to use it to check your answer.)
+\item Using your estimated coefficients for \texttt{m3} and \texttt{m4}, compute the average predicted probability of observing the outcome when \texttt{al\_ethnic} is set to each of the five-number summary quantiles $(0.00, 0.25, 0.50, 0.75, 1.00)$ of the observed distribution of \texttt{al\_ethnic}. In other words, your results should be two vectors, each with five numbers.
 
 \begin{solution}
 \begin{lstlisting}
-odds <- as.numeric(exp(X %*% b))
-prprob <- odds/(1+odds)
-mean(prprob)
-mean(predict(m3))
+# function to compute predicted probabilities
+pp <- function(dat, coefvec) {
+    mean(exp(dat %*% coefvec)/(1+exp(dat %*% coefvec)))
+}
+qs <- quantile(d$al_ethnic, c(0.00,0.25,0.50,0.75,1.00), na.rm = TRUE)
+
+# m3
+Xm3tmp <- Xm3
+m3out <- numeric(5)
+for(i in seq_along(qs)) {
+    Xm3tmp[,2] <- qs[i]
+    m3out[i] <- pp(dat = Xm3tmp, coefvec = optm3$par)
+}
+m3out
+
+# m4
+Xm4tmp <- Xm4
+m4out <- numeric(5)
+for(i in seq_along(qs)) {
+    Xm4tmp[,2] <- qs[i]
+    m4out[i] <- pp(dat = Xm4tmp, coefvec = optm4$par)
+}
+m4out
 \end{lstlisting}
 \end{solution}
 

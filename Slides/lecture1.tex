@@ -3,10 +3,17 @@
 \usepackage{setspace}
 \usepackage{hyperref}
 \usepackage{amsmath}
+\usepackage{mdwlist}
 \usepackage{listings}
     \lstset{basicstyle=\singlespacing\footnotesize\ttfamily}
-
 \newcommand{\matr}[1]{\mathbf{#1}}
+\newcommand{\lik}{\mathcal{L}}
+
+% no indent
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
 
 \title{Matrix Operations and Functions}
 \author{Thomas J. Leeper}
@@ -19,6 +26,16 @@
 \doublespacing
 
 \section{R Basics}
+
+
+
+% GETTING HELP
+
+
+
+
+
+
 
 
 \begin{itemize}
@@ -128,7 +145,7 @@ TRUE != 3
 
 
 
-\item vector indexing (positional, logical)
+\item vector indexing (positional, logical, named)
 
 \begin{lstlisting}
 x <- letters
@@ -165,16 +182,29 @@ c(1,3,5)[-1]
 1:4 + 1:2
 1:3 + 1:2
 
+
+# named indexing
+
+
+
 \end{lstlisting}
 
 
-\item lists
+\item A \texttt{data.frame} is a collection of equal-length vectors.
+
+\begin{lstlisting}
+# built-in data.frames
+mtcars
+iris
+
+# data I/O
+install.packages('rio')
+library('rio')
+
+\end{lstlisting}
 
 
-\item data.frames
 
-
-\item data I/O
 
 \end{itemize}
 
@@ -241,8 +271,7 @@ matrix(1:5, ncol = 1)
 
 
 
-% matrix indexing
-  % diag
+Matrix indexing:
 
 \begin{lstlisting}
 b <- rbind(1:3,4:6,7:9)
@@ -273,38 +302,9 @@ b[lower.tri(b)]
 
 
 
-Representing data as a matrix:
-
-\begin{lstlisting}
-# design matrix is 1 observation per row, one variable per column
 
 
-# interactions
-
-
-# categorical variables
-
-
-# power terms, etc.
-
-
-# intercept
-
-
-\end{lstlisting}
-
-
-
-
-
-% matrix operations
-  % algebra
-    % conformability
-    % matrix multiplication
-      % vector multiplication (dot product)
-      % multiplication by an identity matrix
-      % symmetric matrices
-      % additivity property (X + Y)' = X' + Y'
+Matrix operations:
 
 \begin{lstlisting}
 # scalar addition/subtraction
@@ -319,33 +319,47 @@ a * 2
 a / 2
 a * 1:2
 a / 1:2
+
+
+# inner product (or dot product)
+1:3 %*% 2:4
+1*2 + 2*3 + 3*4
+
+# dot product only works for conformable vectors or matrices
+
+
+# multiplication by an I identity matrix
+matrix(1:9, nrow = 3) %*% diag(3)
+
+# additivity property:  (X + Y)' = X' + Y'
+A <- matrix(1:6, nrow = 3)
+B <- matrix(7:12, nrow = 3)
+A + B
+t(A + B)
+t(A) + t(B)
 \end{lstlisting}
 
 
 
-
-% OLS in matrix notation (only show the matrix representation, not the R solution)
-  % show the formula for variance-covariance matrix
+OLS in matrix notation. We start with a matrix representation of our regression equation:
+% only show the matrix representation, not the R solution
 
 \begin{align*}
 \matr{y} = \matr{X} \matr{b} + \matr{e}
 \end{align*}
 
-We need to minimize the sum of squared residuals.
+We need to minimize the sum of squared residuals, $\matr{e}$, so we flip our equation $\matr{y} = \matr{X} \matr{b} + \matr{e}$ to be $\matr{e} = \matr{y} - \matr{X} \matr{b}$. This gives us the residuals from one estimation of our coefficients $\matr{b}$. We don't want to minimize the residuals, though, instead we want to minimize the sum of squared residuals. Conveniently, matrix notation is a very easy way of representing that because $\matr{e}$ is a vector and the sum of a squared vector is just the dot product (i.e., vector times itself; or a column vector times a row vector representation).
 
-\begin{align*}
-\matr{y} & = \matr{X} \matr{b} + \matr{e}\\
-\matr{e} & = \matr{y} - \matr{X} \matr{b}
-\end{align*}
 
 \begin{align*}
 S(\matr{b}) & = \matr{e}'\matr{e}\\
   & = (\matr{y} - \matr{X} \matr{b})'(\matr{y} - \matr{X} \matr{b})\\
+  & = (\matr{y}' - \matr{b}'\matr{X}')(\matr{y} - \matr{X} \matr{b})\\
   & = \matr{y}'\matr{y} - \matr{y}'\matr{X}\matr{b} - \matr{b}'\matr{X}'\matr{y} + \matr{b}'\matr{X}'\matr{X}\matr{b}\\
   & = \matr{y}'\matr{y} - 2\matr{y}'\matr{X}\matr{b} + \matr{b}'\matr{X}'\matr{X}\matr{b}
 \end{align*}
 
-Last step above is because $\matr{b}'\matr{X}'\matr{y}$ is 1x1, thus equal to its own transpose. To minimize, we set differentiate $S(\matr{b})$, set to 0, and solve for $b$.
+Last step above is because $\matr{b}'\matr{X}'\matr{y}$ is 1x1, thus equal to its own transpose. How do we minimize an equation? To minimize, we set differentiate $S(\matr{b})$, set to 0, and solve for $b$.
 
 \begin{align*}
 \dfrac{\partial S(b)}{\partial b} & = 0 - 2\matr{X}'\matr{y} + 2 \matr{X}'\matr{X}\matr{b}\\
@@ -364,7 +378,61 @@ V(\matr{b}) & = \left[(\matr{X}'\matr{X})^{-1}\matr{X}'\right] V(\matr{y}) \left
   & = \sigma^2 (\matr{X}'\matr{X})^{-1}\\
 \end{align*}
 
-Note assumptions of constant error variance. Other types of standard errors would replace $V(y)$ with something else.
+Note assumptions of constant error variance. Other types of standard errors (e.g., clustered, heteroskedasticity-robust) would replace $V(y)$ with something else.
+
+
+
+
+Representing data as a matrix:
+
+\begin{lstlisting}
+# design matrix is 1 observation per row, one variable per column
+
+mtcars
+
+X <- as.matrix(mtcars[,c('vs', 'am')])
+X
+
+# interactions
+X <- cbind(X, X[,1] * X[,2])
+
+# power terms, etc.
+mtcars[,'mpg'] ^ 2
+
+
+# categorical variables
+mtcars[,"cyl"]
+
+mtcars[,"cyl"] == 4
+mtcars[,"cyl"] == 6
+mtcars[,"cyl"] == 8
+as.numeric(mtcars[,"cyl"] == 4)
+
+model.matrix(~ 0 + factor(cyl), data = mtcars)
+
+
+# intercept
+cbind(1, X)
+
+\end{lstlisting}
+
+
+Another major issue with analyzing data is missingness. We cannot have missing values if we want to calculate most statistics or, for example, estimate a regression model. All data must be complete.
+
+\begin{lstlisting}
+
+# missing data
+
+
+
+# imputation
+
+
+# extracting complete cases
+complete.cases()
+
+
+\end{lstlisting}
 
 
 
@@ -373,8 +441,11 @@ Note assumptions of constant error variance. Other types of standard errors woul
 
 
 
+Matrix multiplication. This is the dot product we saw earlier with vectors generalized to work for matrices.
 
-matrix multiplication
+Matrices are conformable (i.e., can be multiplied) if they are \textit{m-by-n} and \textit{n-by-p}. So number of columns of the first matrix must match number of rows of the second matrix. Otherwise, non-conformable.
+
+The output matrix from matrix multiplication is an \textit{m-by-p} matrix.
 
 \begin{lstlisting}
 mmdemo <- function(A,B){
@@ -390,19 +461,54 @@ mmdemo <- function(A,B){
 }
 
 # conformability
+A <- matrix(1:6, nrow = 3)
+B <- matrix(2:5, nrow = 2)
+
+A %*% B
+B %*% A # non-conformable
+
+# dimension of output
+A <- matrix(1:30, ncol = 3)
+B <- matrix(1:3, nrow = 3)
+A %*% B
 
 
 # multiplication
+A <- matrix(rep(2, 6), ncol = 2)
+B <- matrix(1:4, nrow = 2)
+# DO THIS BY HAND
 
+A <- matrix(c(5,3,2,1,7,4), ncol = 2)
+B <- matrix(c(2,5,6,2,1,7,4,1), nrow = 2)
+# DO THIS BY HAND
 
-# dimension of output
+#A %*% B
+#mmdemo(A,B)
 
 \end{lstlisting}
 
 
-Multiplication of an upper triangular matrix is nice because of lots of zeros.
+Multiplication of a diagonal matrix is nice because of lots of zeros. Similar for an upper or lower triangular matrix.
 
+\begin{lstlisting}
+# multiply by diagonal matrix
+A <- matrix(1:12, ncol = 3)
+B <- diag(1:3)
+A %*% B
 
+# multiply by triangular matrix
+
+\end{lstlisting}
+
+Some properties:
+
+\begin{itemize}
+\item Associative: $(\matr{X}\matr{Y})\matr{Z} = \matr{X}(\matr{Y}\matr{Z})$
+\item Distributive: $(\matr{X} + \matr{Y})\matr{Z} = (\matr{X}\matr{Z}) + (\matr{Y}\matr{Z})$
+\item Scalar distributive: $s(\matr{X}\matr{Y}) = (\matr{X}s\matr{Y}) = (\matr{X}\matr{Y})s$
+\item Additive: $(\matr{X} + \matr{Y})' = \matr{X}' + \matr{Y}'$
+\item Multiplicative: $(\matr{X}\matr{Y})' = \matr{Y}'\matr{X}'$, note reversed order
+\end{itemize}
 
 
 
@@ -425,9 +531,6 @@ Also important is how matrix multiplication and matrix inversion work together:
 Note how the order of the terms in the product are reversed by inversion.
 
 Inverse of transpose is the transpose of the inverse.
-
-% talk about full rank
-
 
 An \textbf{invertible} matrix has an inverse. This is also called a \textbf{nonsingular} matrix. A matrix that does not have an inverse is \textbf{noninvertible} or \textbf{singular}.
 
@@ -472,23 +575,38 @@ Formula for larger matrices is more complex. For a 3x3 matrix:
 a & b & c\\ d & e & f \\ g & h & i\\
 \end{bmatrix}^{-1} =
 \frac{1}{\det(\mathbf{A})} \begin{bmatrix}
-\, A & \, B & \,C \\ \, D & \, E & \, F \\ \, G & \, H & \, I\\
-\end{bmatrix}^T =
-\frac{1}{\det(\mathbf{A})} \begin{bmatrix}
 \, A & \, D & \,G \\ \, B & \, E & \,H \\ \, C & \,F & \, I\\
+\end{bmatrix} = 
+\frac{1}{\det(\mathbf{A})} \begin{bmatrix}
+(ei-fh) & -(bi-ch) & (bf-ce) \\
+-(di-fg) & (ai-cg) & -(af-cd) \\
+(dh-eg) & -(ah-bg) & (ae-bd)  \\
 \end{bmatrix}
 \end{equation*}
 
-The determinant for a 2x2 is $ad-bc$. For a 3x3 it is more complex. It requires extracting the \textbf{minors} of the matrix and multiplying the first-row value of the matrix times the determinant of each minor, summed using \textbf{cofactors} (alternating +1 and -1 matrix).
-
-\texttt{det} determines the determinant of a matrix
+The determinant for a 2x2 is $ad-bc$. For a 3x3 it is more complex. It requires extracting the \textbf{minors} of the matrix and multiplying the first-row value of the matrix times the determinant of each minor, summed using \textbf{cofactors} (alternating +1 and -1 matrix). For our purposes, \texttt{det} determines the determinant of a matrix
 
 Special case: determinant of a triangular matrix is just the product of the diagonal entries. A triangular matrix is only singular if any of the diagonals are zero.
 
-Not all square matrices are invertible. (Non-square matrices do not have inverses.) Is not invertible if its determinant is zero. When does this occur? It is if-and-only-if if either the columns (or rows) are linear functions of each other.
+Not all square matrices are invertible. (Non-square matrices do not have inverses.) Is not invertible if its determinant is zero. When does this occur? It is if-and-only-if if either the columns (or rows) are linear functions of each other (i.e., if the matrix is \textit{rank-deficient}).
 
 
-In practice, we rarely invert matrices. Instead, we use a decomposition. Common decompositions are Cholesky, LU, and QR. The \textbf{QR decomposition} is used by most regression solving algorithms. It decomposes $\matr{X}$ into two matrices, $\matr{Q}\matr{R}$, where $\matr{Q}$ is an m-by-n \textit{orthonormal} matrix and $\matr{R}$ is an m-by-m upper-triangular matrix.
+\begin{lstlisting}
+A <- matrix(1:9, nrow = 3)
+det(A)
+solve(A)
+
+A <- matrix(c(1:3,2,1,3,4,6,8), nrow = 3)
+det(A)
+solve(A)
+
+1/det(A) 
+\end{lstlisting}
+
+Try inverting matrix \texttt{A} by hand using the formula.
+
+
+In practice, we rarely invert matrices. Instead, we use a decomposition or factorization. Common decompositions are Cholesky, LU, and QR. The \textbf{QR decomposition} is used by most regression solving algorithms. It decomposes $\matr{X}$ into two matrices, $\matr{Q}\matr{R}$, where $\matr{Q}$ is an m-by-n \textit{orthonormal} matrix and $\matr{R}$ is an m-by-m upper-triangular matrix.
 
 An \textit{orthnormal} matrix has the nice property: $\matr{M}'\matr{M} = \matr{I}$. (Note: the matrix times its transpose is $\matr{I}$, whereas the general result is that a matrix times its inverse is the identity matrix. So, an orthonormal matrix has an inverse equal to its transpose.)
 
@@ -513,89 +631,48 @@ Q <- qr.Q(QR)
 \end{lstlisting}
 
 
-
-
-
-
 \clearpage
 \section{Formulae}
 
 
-I() notation
-factor() notation
-
-
-Estimating regression models using \texttt{lm} and \texttt{glm}
-
-
-
-\clearpage
-\section{Functions}
-
-\begin{itemize}
-
-\item built-in functions
+Regression notation is R relies on objects called ``formulas''. Formulas are similar to regression notation in Stata but they provide more options for expressing complex regression models.
 
 \begin{lstlisting}
-x <- c(1,3,4,4,5,6,2,3,4)
-mean(x)
-sum(x)
-exp(x)
-log(x)
-sqrt(x)
-length(x)
-seq_along(x)
-\end{lstlisting}
+mtcars
 
-\item writing functions
+mpg ~ hp
+mpg ~ hp + wt
+mpg ~ hp + wt + am + wt:am
+mpg ~ hp + wt*am
+
+# we can save formula for use
+f1 <- mpg ~ hp + wt*am
+class(f1)
+lm(mpg ~ hp + wt*am, data = mtcars)
+lm(f1, data = mtcars)
+
+# intercept-only model
+mpg ~ 1
+lm(mpg ~ 1, data = mtcars)
+sd(mtcars$mpg)
+
+# dropping an intercept
+mpg ~ 0 + hp
 
 
-\begin{lstlisting}
-# no arguments
-f <- function() 2
-f
-f()
-f <- function() 'hello world'
-f()
+# I() notation
+lm(mpg ~ hp + I(hp^2), data = mtcars)
 
-# one argument
-f <- function(x) {
-    x^2
-}
-f(2)
-f <- function(x) {
-    (1:5)^(x)
-}
-f(3)
 
-# default argument
-f <- function(x = 2) {
-    x^2
-}
-f()
-f(2)
-f(3)
+# factor() notation to create categorical/dummy variables
+lm(mpg ~ hp + factor(cyl), data = mtcars)
 
-# multiple arguments
-f <- function(x,y) {
-    x - y
-}
-
-# return values
-f <- function(x) {
-    y <- combn(x, 2)
-    min(colSums(y))
-}
+# `model.matrix`
+model.matrix(~ 0 + factor(cyl), data = mtcars)
 
 \end{lstlisting}
 
-% argument recycling, again
 
-
-
-
-
-\end{itemize}
 
 
 \end{document}

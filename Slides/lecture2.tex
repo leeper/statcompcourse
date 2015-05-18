@@ -3,8 +3,17 @@
 \usepackage{setspace}
 \usepackage{hyperref}
 \usepackage{amsmath}
+\usepackage{mdwlist}
 \usepackage{listings}
     \lstset{basicstyle=\singlespacing\footnotesize\ttfamily}
+\newcommand{\matr}[1]{\mathbf{#1}}
+\newcommand{\lik}{\mathcal{L}}
+
+% no indent
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
 
 \title{Programming Basics}
 \author{Thomas J. Leeper}
@@ -17,7 +26,89 @@
 \doublespacing
 
 
-\clearpage
+\section{Functions}
+
+Built-in functions
+
+\begin{lstlisting}
+x <- c(1,3,4,4,5,6,2,3,4)
+mean(x)
+sum(x)
+exp(x)
+log(x)
+sqrt(x)
+length(x)
+seq_along(x)
+quantile(x, c(0.05, 0.95))
+\end{lstlisting}
+
+
+
+
+Writing functions
+
+
+\begin{lstlisting}
+# no arguments
+f <- function() 2
+f
+f()
+f <- function() 'hello world'
+f()
+
+# one argument
+f <- function(x) {
+    x^2
+}
+f(2)
+f <- function(x) {
+    (1:5)^(x)
+}
+f(3)
+
+# default argument
+f <- function(x = 2) {
+    x^2
+}
+f()
+f(2)
+f(3)
+
+# multiple arguments
+f <- function(x,y) {
+    x - y
+}
+
+# return values
+f <- function(x) {
+    y <- combn(x, 2)
+    min(colSums(y))
+}
+
+# list return values
+f <- function(x) {
+    list(mean = mean(x),
+         range = range(x),
+         sd = sd(x))
+}
+f(1:6)
+f(1:6)$mean
+# etc.
+
+\end{lstlisting}
+
+% argument recycling, again
+
+% environments and refrential transparency
+
+
+
+% dispatch (print, summary, etc.)
+
+
+
+
+
 \section{Repeated Operations}
 
 Looping: \texttt{for}
@@ -49,7 +140,7 @@ while(x) {
 \end{lstlisting}
 
 
-\texttt{apply} and \texttt{*apply}
+The \texttt{apply} and \texttt{*apply}-family functions
 
 
 \begin{lstlisting}
@@ -60,10 +151,16 @@ sapply(1:5, mean)
 m <- matrix(1:16, nrow = 4)
 apply(m, 1, sum)
 apply(m, 2, sum)
+
+
+# Use `mapply`
+
+
+
 \end{lstlisting}
 
 
-\texttt{replicate}
+Using \texttt{replicate} to repeat an expression
 
 \begin{lstlisting}
 rnorm(1) + rnorm(1)
@@ -72,7 +169,7 @@ replicate(5, rnorm(1) + rnorm(1))
 
 
 
-random numbers and \texttt{sample}
+Generating random numbers and using \texttt{sample}
 
 \begin{lstlisting}
 rnorm(1)
@@ -117,7 +214,7 @@ sd(r2)
 
 Bootstrap
 
-Useful for estimating variance/SD/SE for estimators that do not have a closed form variance calculation. Example: median.
+Useful for estimating variance/SD/SE for estimators that do not have a closed form variance calculation, and in many other contexts (e.g., non-independent observations, etc.). Let's look at a simple example: median.
 
 \begin{lstlisting}
 set.seed(1)
@@ -132,18 +229,77 @@ median(s)
 b <- replicate(1000, mean(sample(s, 1e3, TRUE)))
 mean(b) # mean of bootstrapped means
 sd(b) # sd of bootstrapped means
+
 quantile(b, c(0.025,0.975)) # 95 % CI for mean
+
 
 b <- replicate(1000, median(sample(s, 1e3, TRUE)))
 mean(b) # mean of bootstrapped medians
 sd(b) # sd of bootstrapped medians
+
 quantile(b, c(0.025,0.975)) # 95 % CI for median
 
 
-# another distribution
-x2 <- rgamma(1e6, 1)
 
 \end{lstlisting}
+
+
+
+
+
+
+Bootstrap OLS
+
+\begin{lstlisting}
+# function to estimate model one time
+once <- function(X, y) {
+    b <- solve(t(X) %*% X) %*% t(X) %*% y
+    fitted <- X %*% b
+    e <- fitted - y
+    df <- nrow(X) - length(b)
+    s2 <- (t(e) %*% e) / df
+    V <- as.numeric(s2) * solve(t(X) %*% X)
+    sqrt(diag(V))
+}
+
+# bootstrap
+n <- 5000
+bootmat <- matrix(numeric(), ncol = 3, nrow = n)
+for(i in 1:n) {
+    s <- sample(1:nrow(X), nrow(X), TRUE)
+    Xtmp <- X[s,]
+    ytmp <- y[s]
+    tried <- try(once(Xtmp, ytmp))
+    if(!inherits(tried, 'try-error'))
+        bootmat[i,] <- tried
+}
+colMeans(bootmat, na.rm = TRUE)
+
+# jackknife
+jackmat <- matrix(numeric(), ncol = 3, nrow = nrow(X))
+for(i in 1:nrow(X)) {
+    Xtmp <- X[-i,]
+    ytmp <- y[-i]
+    tried <- try(once(Xtmp, ytmp))
+    if(!inherits(tried, 'try-error'))
+        jackmat[i,] <- tried
+}
+colMeans(jackmat, na.rm = TRUE)
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 Jackknife
@@ -167,78 +323,189 @@ quantile(s, c(0.025, 0.975))
 \clearpage
 \section{Optimization}
 
-Likelihood function:
+Recall the objective of maximum likelihood estimation. We have some data which represent a sample from a population. The population distribution is governed by some parameters, $\theta$, and we want to use our sample data to estimate (or infer) the values of those parameters. MLE is the process of finding the values of $\theta$ that make our sample data most likely. In other words, given $\theta$ takes some set of values, how likely are we to observe the data we actually saw? If $\theta$ had some other set of values, how likely would we be to observe our data? etc. etc.
+
+The Likelihood function is a statement of this conditional probability: $\lik(\theta|data)$. We want to ``maximize'' this function. When the maximum is highest, we have found the input parameter values for $\theta$ that make our data most likely. This in turn tells us that these are the parameters most likely to have generated our sample data, and thus the population data from which the sample data are drawn.
+
+$\lik$ is just a product of the likelihoods of observing each case in our data, so:
+
 \begin{align*}
-L(\pi|data) & = Pr(data|\pi) = \pi^x(1-\pi)^{n-x}
+\lik(\theta|X) & = \lik_1 + \lik_2 + \dots\\
+ & = \prod_{i=1}^{n} \lik_i \\
+ & = p(x_1|\theta) + p(x_2|\theta) + \dots\\
+ & = \prod_{i=1}^{n} p(x_1|\theta)
 \end{align*}
 
-Log likelihood function:
+It is often more convenient to work with log likelihoods: $\ln\lik = \sum_{i=1}^{n} \ln p(x_i|\theta)$. This transformation is possible because of the property: $log(x*y) = log(x) + log(y)$. Why do we do this? Simplicity but also floating-point issues (because small numbers multiplied by each other go to zero, our likelihood can end up beyond the precision of contemporary computers).
 
+Stating our likelihood function requires making a parametric assumption (i.e., we have to choose a family of probability distributions defined by parameters $\theta$ that will indicating how likely a given observation is).
+
+Once we've defined our likelihood function, we simply evaluate that function (with different possible values for $\theta$) at the observed values of our data and select the values $\theta$ yielding the highest (log-)likelihood.
+
+Likelihood function for a simple example involving a proportion of heads coin tosses. We want to find the parameter $\pi$ that makes this set of heads most likely:
 \begin{align*}
-ln(L(\pi)) & = x \ln(\pi) + (n-x) \ln(1-\pi)
+\lik(\pi|heads) & = Pr(\text{heads}|\pi) = \pi^\text{heads}(1-\pi)^{\text{tails}}
 \end{align*}
+
+Here's the corresponding Log likelihood function:
+\begin{align*}
+\ln\lik(\pi) & = \text{heads}\ln(\pi) + \text{tails}\ln(1-\pi)
+\end{align*}
+
+Here's how we represent that in R (note how $\pi$ is written as \texttt{x}):
 
 \begin{lstlisting}
-# maximize
-ll <- function(x, heads, n) {
+ll <- function(x, heads = 7, n = 10) {
   heads*log(x) + (n-heads)*log(1-x)
 }
-optimize(ll, interval = c(0,1), heads = 7, n = 10, maximum = TRUE)
-optimize(ll, interval = c(0,1), heads = 3, n = 10, maximum = TRUE)
-
-# minimize
-negll <- function(x, heads, n) {
-  -(heads*log(x) + (n-heads)*log(1-x))
-}
-optimize(negll, interval = c(0,1), heads = 7, n = 10)
-optim(p = 0.5, negll, gr = NULL, heads = 7, n = 10, lower = 0, upper = 1, method = 'Brent')
 \end{lstlisting}
 
+How do we find the maximum likelihood estimate? We can do this in three ways:
 
-Talk about how log-likelihood is much more reliable when using floating-point computations because small numbers multiplied by each other go to zero (beyond the precision of most computers)
+\begin{itemize*}
+\item Analytical
+\item Grid search
+\item Optimization
+\end{itemize*}
+
+Analytical is only available for some problems. Grid search is slow. Optimization is fastest and most general. 
 
 
-
-
-
-
-
-\textit{Score} function is the derivative of the log likelihood:
+Analytic solution involves taking the derivative of the log likelihood, which is called the \textbf{score function}:
 
 \begin{align*}
-\dfrac{d\ln L(\pi)}{d\pi} & = \dfrac{x}{\pi} + (n-x) \dfrac{1}{1-\pi}(-1)\\
-& = \dfrac{x}{\pi} - \dfrac{n-x}{1-\pi}
+\dfrac{d\ln \lik(\pi)}{d\pi} & = \dfrac{heads}{\pi} + tails \dfrac{1}{1-\pi}(-1)\\
+& = \dfrac{\text{heads}}{\pi} - \dfrac{\text{tails}}{1-\pi}
 \end{align*}
 
 Solve for parameter $\pi$ to find the maximum likelihood estimate:
 
 \begin{align*}
-\dfrac{d\ln L(\pi)}{d\pi} & = \dfrac{x}{\pi} - \dfrac{n-x}{1-\pi}\\
-0 & = \dfrac{x}{\pi} - \dfrac{n-x}{1-\pi}\\
-\dfrac{n-x}{1-\pi} & = \dfrac{x}{\pi}\\
-\pi(n-x) & = x(1-\pi)\\
+\dfrac{d\ln \lik(\pi)}{d\pi} & = \dfrac{\text{heads}}{\pi} - \dfrac{\text{tails}}{1-\pi}\\
+0 & = \dfrac{\text{heads}}{\pi} - \dfrac{\text{tails}}{1-\pi}\\
+\dfrac{\text{tails}}{1-\pi} & = \dfrac{\text{heads}}{\pi}\\
+\pi(\text{tails}) & = (1-\pi)\text{heads}\\
+\pi(n - x) & = (1-\pi)(x)\\
 n\pi - x\pi & = x - x\pi\\
 n\pi & = x\\
 \pi & = \dfrac{x}{n}
 \end{align*}
 
+That provides a simple analytic solution.
 
-% grid search
+To perform a grid search, we simply specify a set of possible values of our parameter, calculate the likelihood for each and pick the one that is largest.
 
-% `optim`
 \begin{lstlisting}
-p <- function(x, n) {
-  x/n
-}
+possible <- seq(0,1, by = 0.05)
+out <- sapply(possible, ll)
+out
+which.max(out)
+possible[which.max(out)]
 
+# plot of log-likelihood
+curve(ll, from = 0, to = 1)
+points(possible, out, col = 'blue', pch = 18)
+points(possible[which.max(out)], out[which.max(out)], col = 'red', pch = 15)
+abline(v = possible[which.max(out)], col = 'red')
+
+# override defaults
+out <- sapply(possible, ll, heads = 4, n = 10)
 \end{lstlisting}
 
 
+In R, `optim` is a minimization tool, so we always need to negate our function unless we set `control`.
+
+\begin{lstlisting}
+# function to minimize
+negll <- function(x, heads, n) {
+  -(heads*log(x) + (n-heads)*log(1-x))
+}
+
+# minimize using `negll`
+optim(p = 0.5, negll, heads = 7, n = 10, lower = 0, upper = 1, method = 'Brent')
+
+# maximize using `ll`
+optim(p = 0.5, ll, heads = 7, n = 10, lower = 0, upper = 1, 
+      method = 'Brent', control = list(fnscale = -1))
+\end{lstlisting}
 
 
+Now let's do a more complex problem, such as the coefficients for a Probit regression model. Let's do something trivial like predict whether a car is automatic as a function of its horsepower:
+
+\begin{lstlisting}
+m <- glm(am ~ hp, data = mtcars, family = binomial(link = "probit"))
+summary(m)
+\end{lstlisting}
+
+How do we obtain the MLE of this model? We have to start by writing out a likelihood function, then maximize that function. The likelihood function will take possible parameter values (i.e., coefficients) as inputs and evaluate our sample data given those possible coefficient values. In other words, if the intercept and slope were actually $\theta$, what is the probability of seeing the values of $\matr{y}$ that we actually observe in our data:
+
+\begin{align*}
+\lik(\beta) & = \prod_{i=1}^{n} (\pi_i)^{y_i} (1-\pi_i)^(1-y_i)\\
+\ln\lik(\beta) & = \sum_{i=1}^{n} \ln((\pi_i)^{y_i} (1-\pi_i)^(1-y_i)) \\
+ & = \sum_{i=1}^{n} y_i \ln(\pi_i) + (1-y_i) \ln(1-\pi_i)\\
+ & = \sum_{i=1}^{n} y_i \ln(\phi(X_i\beta)) + (1-y_i) \ln(1-\phi(X_i\beta))
+\end{align*}
+
+The last step given $\pi_i = \phi(X_i\beta)$ (the inverse link function for the probit model). For the logit model, this inverse-link function is $pi_i = \dfrac{e^{X_i\beta}}{1+ e^{X_i\beta}}$.
+
+Here's how we represent that in R:
+
+\begin{lstlisting}
+ll <- function(beta, X, y) {
+  p <- pnorm(X %*% beta)
+  lik <- y * log(p) + (1-y) * log(1-p)
+  sum(lik)
+}
+\end{lstlisting}
+
+Now we can solve this using a grid search:
+
+\begin{lstlisting}
+X <- cbind(1, mtcars$hp)
+y <- mtcars$am
+
+iseq <- seq(-5, 5, by = 0.05)
+sseq <- seq(-0.08, 0.08, by = 0.005)
+g <- expand.grid(intercept = iseq, slope = sseq)
+grid_search <- apply(g, 1, function(z) ll(beta = z, X = X, y = y))
+
+# estimated parameter values
+g[which.max(grid_search), ]
+
+# 3-D plot of log-likelihood function
+tmp <- grid_search
+tmp[tmp == -Inf] <- -1e3
+persp(x = iseq, y = sseq, z = matrix(tmp, nrow = length(iseq)), 
+      xlim = c(-5, 5), ylim = c(-0.1, 0.1), zlim = c(-1e3, 0), 
+      ticktype = 'detailed', theta = 45, phi = 20, 
+      shade = 0.25, col = 'lightblue', border = NA)
+
+# heatmap of log-likelihood function
+image(x = iseq, y = sseq, z = matrix(tmp, nrow = length(iseq)),
+      col = rainbow(1e4, start = 0.1, end = 1))
+\end{lstlisting}
+
+Or using \texttt{optim}:
+
+\begin{lstlisting}
+opt <- optim(par = c(0,0), ll, X = X, y = y, 
+             control = list(fnscale = -1), hessian = TRUE, method = "BFGS")
+\end{lstlisting}
 
 
-  % hessian
+The reason we ask for \texttt{hessian = TRUE} is this is what provides us standard errors:
+
+\begin{lstlisting}
+opt$hessian
+sqrt(diag(solve(-opt$hessian)))
+
+# compare to original results
+opt
+sqrt(diag(solve(-opt$hessian)))
+
+summary(m)
+\end{lstlisting}
+
 
 
 \end{document}

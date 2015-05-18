@@ -12,5 +12,7 @@ Syllabus/*.*
 *.log
 *.out
 *.synctex.gz
-
+*.bbl
+*.cut
+*.blg
 *.dta

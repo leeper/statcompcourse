@@ -29,7 +29,7 @@
 
 \section*{Purpose and Overview}
 
-The purpose of this assignment is for you to demonstrate your understanding of the mathematics and computational procedures involved in the estimation of basic regression models. Below are several regression models. The first two (\texttt{m1} and \texttt{m2}) are models explaining life expectancy and the latter two (\texttt{m3} and \texttt{m4}) are models explaining democracy. All data are drawn from the Quality of Government Basic Dataset. The data and codebook are available here: \url{http://qog.pol.gu.se/data/datadownloads/qogbasicdata}.
+The purpose of this assignment is for you to demonstrate your understanding of the mathematics and computational procedures involved in the estimation of basic regression models. Below are several regression models. The first two (\texttt{m1} and \texttt{m2}) are OLS models explaining life expectancy and the latter two (\texttt{m3} and \texttt{m4}) are logistic regression models explaining democracy. All data are drawn from the Quality of Government Basic Dataset. The data and codebook are available here: \url{http://qog.pol.gu.se/data/datadownloads/qogbasicdata}.
 
 \begin{lstlisting}
 d <- rio::import("http://www.qogdata.pol.gu.se/data/qog_bas_cs_jan15.csv")
@@ -55,7 +55,7 @@ m4 <- glm(f4, data = d, family = binomial(link='logit'))
 
 \section*{Submitting Your Assignment}
 
-\noindent Submit your assignment via email to Thomas (\url{mailto:tleeper@ps.au.dk}) in the form of a single, complete R syntax file (.R) or Stata (.do) file in your submitted assignment. Each step of the code should be numbered (in the form of a comment) according to the numbering of the tasks. You do not need to explain, describe, or present the output of any analyses.
+\noindent Submit your assignment via email to Thomas (\url{mailto:tleeper@ps.au.dk}) in the form of a single, complete R syntax file (.R) or Stata (.do) file in your submitted assignment. Each step of the code should be numbered and labeled (in the form of a R or Stata comment) according to the numbering of the steps below. You do not need to explain, describe, or present the output of any analyses.
 
 
 \clearpage
@@ -64,9 +64,9 @@ m4 <- glm(f4, data = d, family = binomial(link='logit'))
 
 \begin{enumerate}
 
-\section{Ordinary Least Squares Regression}
+\section*{Ordinary Least Squares Regression}
 
-\item Construct a design matrix $\matr{X}$ for \texttt{m1}. Extract the $\matr{R}$ matrix from the $\matr{Q}\matr{R}$ decomposition of the design matrix for model \texttt{m1}. Write R code to manually invert this matrix using the formula given in class for the inverse of a 3-by-3 matrix.
+\item Construct a design matrix $\matr{X}$ for \texttt{m1}. Extract the $\matr{R}$ matrix from the $\matr{Q}\matr{R}$ decomposition of $\matr{X}$. Write code to produce this matrix using the formula given in class for the inverse of a 3-by-3 matrix.
 
 \begin{solution}
 \begin{lstlisting}
@@ -96,7 +96,7 @@ solve(R)
 \end{lstlisting}
 \end{solution}
 
-\item Create a vector \texttt{y} to represent the outcome. Then construct an appropriate design matrix $\matr{X}$ for \texttt{m2} (as represented by formula \texttt{f2}) from the original variables in the dataset, including the specified categorical (factor) variables and interaction term. (See Fox p.153--154.)
+\item Create a vector \texttt{y} to represent the outcome. Then construct an appropriate design matrix $\matr{X}$ for \texttt{m2} (as represented by formula \texttt{f2}) from the original variables in the dataset, including the specified categorical (factor) variables and interaction term. Note: Be careful the handling of missing values!
 
 \begin{solution}
 \begin{lstlisting}
@@ -144,7 +144,7 @@ beta
 \end{lstlisting}
 \end{solution}
 
-\item Obtain the fitted values (where $\matr{\hat{y}} = \matr{X}\matr{\hat{\beta}}$), from model \texttt{m2} for a new observation that takes on the following values:
+\item Obtain the fitted values (where $\matr{\hat{y}} = \matr{X}\matr{\hat{\beta}}$), from model \texttt{m2} with all variables held at their observed values, except:
 
 \begin{itemize}
 \item \texttt{gle\_cgdpc} = 10000
@@ -152,8 +152,6 @@ beta
 \item \texttt{ross\_oil\_netexpc} = 1000
 \item \texttt{ht\_colonial} = 0
 \end{itemize}
-
-With all other variables held at their observed values.
 
 \begin{solution}
 \begin{lstlisting}
@@ -175,12 +173,12 @@ Xtmp[,'ht_colonial8'] <- 0
 #Xtmp[,'ht_colonial9'] <- 0 # dropped previously
 Xtmp[,'ht_colonial10'] <- 0
 
-fitted <- X %*% beta
+fitted <- Xtmp %*% beta
 fitted
 \end{lstlisting}
 \end{solution}
 
-\item Estimate the variance-covariance matrix of the OLS estimates for \texttt{m2} and extract estimated standard errors from that matrix. The formula for OLS variance-covariance matrix is given on Fox p.158 and in the course notes.
+\item Estimate the variance-covariance matrix of the OLS coefficient estimates for \texttt{m2} and extract estimated standard errors from that matrix (see Fox p.158).
 
 \begin{solution}
 \begin{lstlisting}
@@ -198,13 +196,30 @@ sqrt(diag(V))
 \end{lstlisting}
 \end{solution}
 
-\item Use the estimated coefficients and standard errors for \texttt{m2} to obtain the \textit{t}-statistics for each coefficient estimate under a null hypothesis $H_0: \beta_k = 0$. Calculate the p-values for each test statistic using the \texttt{pt} function, which returns the value of Student's \textit{t} cumulative distribution function for a given test statistic.
+\item Use the estimated coefficients and standard errors for \texttt{m2} to obtain the \textit{t}-statistics for each coefficient estimate under a null hypothesis $H_0: \beta_k = 0$. Calculate the one-tailed and two-tailed p-values for each test statistic using the \texttt{pt} function, which returns the value of Student's \textit{t} cumulative distribution function.
+
+\begin{solution}
+\begin{lstlisting}
+tstats <- beta/sqrt(diag(V))
+
+# determine degrees of freedom for t-test
+ndf <- nrow(x) - length(beta)
+
+# one-tailed test (two alternative strategies)
+1-pt(abs(tstats), ndf)
+pt(-abs(tstats), ndf)
+
+# two-tailed test (two alternative strategies)
+2*(1-pt(abs(tstats), ndf))
+2*pt(-abs(tstats), ndf)
+\end{lstlisting}
+\end{solution}
 
 
 \clearpage
-\section{Logistic Regression}
+\section*{Logistic Regression}
 
-\item Represent the log-likelihood function for logistic regression as an R function (or Stata function). Recall the general structure of the log-likelihood for a binary outcome is: 
+\item Represent the log-likelihood function for logistic regression as an R function (or Stata function). Recall the general structure of the log-likelihood for a binary outcome variable is: 
 \begin{align*}
 \ln\lik(\beta) = \sum_{i=1}^{n} y_i \ln(\pi_i) + (1-y_i) \ln(1-\pi_i)
 \end{align*}
@@ -249,7 +264,7 @@ optm3$par
 \end{lstlisting}
 \end{solution}
 
-\item Estimate the standard errors for \texttt{m3} using bootstrap estimation. 
+\item Estimate the standard errors for coefficient estimates in \texttt{m3} using bootstrapping. 
 
 \begin{solution}
 \begin{lstlisting}
@@ -299,14 +314,14 @@ t(apply(bootmat, 2, quantile, probs = c(0.025,0.975), na.rm = TRUE))
 \end{lstlisting}
 \end{solution}
 
-\item Estimate the coefficients for \texttt{m4} using \texttt{optim} and obtain the standard errors as the diagonal of the matrix inverse of the negative hessian matrix.
+\item Estimate the coefficients for \texttt{m4} using \texttt{optim}, obtain the standard errors as the diagonal of the matrix inverse of the negative hessian matrix, calculate the $z$-statistic for each coefficient estimate, and determine its two-tailed p-value from \texttt{pnorm} (the normal cumulative distribution function).
 
 \begin{solution}
 \begin{lstlisting}
 dat <- cbind(d$chga_demo,1,d$al_ethnic, log(d$wdi_landarea), d$gle_cgdpc/1e4, d$ross_oil_netexpc/1e3)
 cc <- complete.cases(dat)
-Xm4 <- X
-ym4 <- y
+Xm4 <- dat[cc,-1]
+ym4 <- dat[cc,1]
 
 optm4 <- optim(par = rep(0, 5),
                fn = logitll,
@@ -321,11 +336,19 @@ optm4$par
 
 # standard errors
 sqrt(diag(solve(-optm4$hessian)))
+
+# z-statistics
+zstats <- optm4$par/sqrt(diag(solve(-optm4$hessian)))
+zstats
+
+# two-tailed p-values (two alternative strategies)
+2*(1-pnorm(abs(zstats)))
+2*pnorm(-abs(zstats))
 \end{lstlisting}
 \end{solution}
 
 
-\item Using your estimated coefficients for \texttt{m3} and \texttt{m4}, compute the average predicted probability of observing the outcome when \texttt{al\_ethnic} is set to each of the five-number summary quantiles $(0.00, 0.25, 0.50, 0.75, 1.00)$ of the observed distribution of \texttt{al\_ethnic}. In other words, your results should be two vectors, each with five numbers.
+\item Using your estimated coefficients for \texttt{m3} and \texttt{m4}, compute the \textit{average} predicted probability of observing the outcome when \texttt{al\_ethnic} is set to each of the five-number summary quantiles $(0.00, 0.25, 0.50, 0.75, 1.00)$ of the observed distribution of \texttt{al\_ethnic} and all other covariates are held at their observed values. Your results should be two vectors, one for each model, each containing five numbers.
 
 \begin{solution}
 \begin{lstlisting}

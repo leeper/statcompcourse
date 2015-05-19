@@ -96,7 +96,7 @@ solve(R)
 \end{lstlisting}
 \end{solution}
 
-\item Create a vector \texttt{y} to represent the outcome. Then construct an appropriate design matrix $\matr{X}$ for \texttt{m2} (as represented by formula \texttt{f2}) from the original variables in the dataset, including the specified categorical (factor) variables and interaction term. Note: Be careful the handling of missing values!
+\item Create a vector \texttt{y} to represent the outcome. Then construct an appropriate design matrix $\matr{X}$ for \texttt{m2} (as represented by formula \texttt{f2}) from the original variables in the dataset, including the specified categorical (factor) variables and interaction term (see Fox pp.153--155). Note: Be careful handling missing values!
 
 \begin{solution}
 \begin{lstlisting}
@@ -196,7 +196,7 @@ sqrt(diag(V))
 \end{lstlisting}
 \end{solution}
 
-\item Use the estimated coefficients and standard errors for \texttt{m2} to obtain the \textit{t}-statistics for each coefficient estimate under a null hypothesis $H_0: \beta_k = 0$. Calculate the one-tailed and two-tailed p-values for each test statistic using the \texttt{pt} function, which returns the value of Student's \textit{t} cumulative distribution function.
+\item Use the estimated coefficients and standard errors for \texttt{m2} to obtain the \textit{t}-statistics for each coefficient estimate under a null hypothesis $H_0: \beta_k = 0$ (see Fox 3.3 and 4.4). Calculate the one-tailed and two-tailed p-values for each test statistic using the \texttt{pt} function, which returns the value of Student's \textit{t} cumulative distribution function.
 
 \begin{solution}
 \begin{lstlisting}
@@ -219,7 +219,7 @@ pt(-abs(tstats), ndf)
 \clearpage
 \section*{Logistic Regression}
 
-\item Represent the log-likelihood function for logistic regression as an R function (or Stata function). Recall the general structure of the log-likelihood for a binary outcome variable is: 
+\item Represent the log-likelihood function for logistic regression as an R (or Stata) function (see Fox 3.6). Recall the general structure of the log-likelihood for a binary outcome variable is: 
 \begin{align*}
 \ln\lik(\beta) = \sum_{i=1}^{n} y_i \ln(\pi_i) + (1-y_i) \ln(1-\pi_i)
 \end{align*}

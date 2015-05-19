@@ -17,7 +17,7 @@
 
 \title{Matrix Operations and Functions}
 \author{Thomas J. Leeper}
-\date{May 12, 2015}
+\date{May 19, 2015}
 
 \begin{document}
 
@@ -29,12 +29,49 @@
 
 
 
-% GETTING HELP
+Getting help
+
+\begin{itemize*}
+\item \texttt{?} and \texttt{??}
+\item StackOverflow: \url{http://stackoverflow.com/questions/tagged/r}
+\item If you ever think you're in hell, read \textit{The R Inferno} (\url{http://www.burns-stat.com/pages/Tutor/R_inferno.pdf})
+\end{itemize*}
 
 
+Differences between R and Stata
+
+\begin{itemize*}
+\item Multiple datasets at once
+\item Store lots of other kinds of objects simultaneously
+\item Core set of functionality, with lots of functionality available in add-on packages
+\item Open source! You can look under the hood at everything
+\item R is a full-fledged programming language, whereas Stata is a data analysis package
+\item R is primarily a ``functional'' programming language, which means that actions are performed by specifying an input to a function and storing the output of that function in a new object
+\item This allows for non-destructive analysis (often no need to go back and redo all steps if you make a mistake)
+\end{itemize*}
 
 
+R Console vs RStudio
 
+\begin{itemize*}
+\item Two popular ways to use R: console/GUI and RStudio
+\item R console or GUI is a basic interface
+\item RStudio is an ``integrated development environment'' meant to make it easier to do some things
+\item None of these have point and click menus
+\item We'll work in the console
+\end{itemize*}
+
+
+Basic operations of the console
+\begin{itemize*}
+\item Type commands and press enter (like in Stata)
+\item Line continuation
+\item Whitespace
+\item Previous commands
+\item Command completion
+\item Clearing previous results
+\item Limited menus
+\end{itemize*}
 
 
 
@@ -184,8 +221,15 @@ c(1,3,5)[-1]
 
 
 # named indexing
-
-
+x <- 1:3
+names(x)
+names(x) <- c('one','two','three')
+names(x)
+x
+x[1]
+x['one']
+x <- c(a = 1, b = 3, c = d)
+x['b']
 
 \end{lstlisting}
 
@@ -200,18 +244,17 @@ iris
 # data I/O
 install.packages('rio')
 library('rio')
-
 \end{lstlisting}
-
-
-
 
 \end{itemize}
 
+Questions?
 
 
-\clearpage
-\section{Matrices}
+
+\section{Matrices and OLS Estimation}
+
+If we have the following matrix:
 
 \begin{equation}
 \begin{bmatrix}
@@ -221,38 +264,32 @@ library('rio')
 \end{equation}
 
 
-% matrices
-  % square matrix
-  % upper/lower triangle
-  % identity matrix
-  % row and column vectors
-  % representaton of data as a matrix
+We represent that in R as a vector of values passed to the \texttt{matrix()} function, which regulates the dimensions of the matrix:
 
 \begin{lstlisting}
-matrix(1:6)
-matrix(1:6,nrow=2)
-matrix(1:6,ncol=3)
-matrix(1:6,nrow=2, ncol=3)
-matrix(1:6,nrow=2, ncol=3, byrow=TRUE)
+matrix(c(-1, 2, 3, -4), nrow = 2)
 
-a <- matrix(1:10,nrow=2)
+# other examples
+matrix(1:6)
+matrix(1:6, nrow=2)
+matrix(1:6, ncol=3)
+matrix(1:6, nrow=2, ncol=3)
+matrix(1:6, nrow=2, ncol=3, byrow=TRUE)
+
+a <- matrix(1:10, nrow=2)
 length(a)
 nrow(a)
 ncol(a)
 dim(a)
 
-
 rbind(1:3,4:6,7:9)
 cbind(1:3,4:6,7:9)
 
-
 # transpose
 t(rbind(1:3,4:6,7:9))
-
 \end{lstlisting}
 
-
-Manually calculate the transpose of a matrix
+Manually calculate the transpose of a matrix!
 
 
 Some special matrices:
@@ -260,6 +297,7 @@ Some special matrices:
 \begin{lstlisting}
 # identity matrix
 diag(3)
+# be careful with `diag()`. it does many different things
 
 # row vector
 matrix(1:5, nrow = 1)
@@ -267,8 +305,6 @@ matrix(1:5, nrow = 1)
 # column vector
 matrix(1:5, ncol = 1)
 \end{lstlisting}
-
-
 
 
 Matrix indexing:
@@ -290,18 +326,13 @@ b[-1,2:3]
 b[c(TRUE,TRUE,FALSE),]
 b[,c(TRUE,FALSE,TRUE)]
 
-
-# diag
+# `diag` for extraction
 diag(b)
 upper.tri(b)	#' upper triangle
 b[upper.tri(b)]
 lower.tri(b)	#' lower triangle
 b[lower.tri(b)]
 \end{lstlisting}
-
-
-
-
 
 
 Matrix operations:
@@ -320,17 +351,6 @@ a / 2
 a * 1:2
 a / 1:2
 
-
-# inner product (or dot product)
-1:3 %*% 2:4
-1*2 + 2*3 + 3*4
-
-# dot product only works for conformable vectors or matrices
-
-
-# multiplication by an I identity matrix
-matrix(1:9, nrow = 3) %*% diag(3)
-
 # additivity property:  (X + Y)' = X' + Y'
 A <- matrix(1:6, nrow = 3)
 B <- matrix(7:12, nrow = 3)
@@ -341,7 +361,10 @@ t(A) + t(B)
 
 
 
-OLS in matrix notation. We start with a matrix representation of our regression equation:
+\subsection{OLS in matrix notation}
+
+
+We start with a matrix representation of our regression equation:
 % only show the matrix representation, not the R solution
 
 \begin{align*}
@@ -381,24 +404,34 @@ V(\matr{b}) & = \left[(\matr{X}'\matr{X})^{-1}\matr{X}'\right] V(\matr{y}) \left
 Note assumptions of constant error variance. Other types of standard errors (e.g., clustered, heteroskedasticity-robust) would replace $V(y)$ with something else.
 
 
+\vspace{1em}
+What do we need to know to be able to calculate this?
 
+\begin{itemize}
+\item Creating a matrix to represent our data
+\item Scalar multiplication
+\item Matrix transpose
+\item Matrix multiplication
+\item Matrix inversion
+\item Matrix indexing in R and extraction of a matrix diagonal
+\end{itemize}
 
-Representing data as a matrix:
+\subsection{Data as a \textbf{design matrix}}
+
+A design matrix is 1 observation per row, one variable per column. In order to represent complex terms (power terms, interactions, transformations, indicator/dummy variables), we have to transform our original data.frame into a a purely numeric matrix, with no missing data, one column for each term in the model, and a column of 1's to estimate the intercept. There can also be no linear dependence between columns.
 
 \begin{lstlisting}
-# design matrix is 1 observation per row, one variable per column
-
 mtcars
 
 X <- as.matrix(mtcars[,c('vs', 'am')])
 X
 
 # interactions
+X[,1] * X[,2]
 X <- cbind(X, X[,1] * X[,2])
 
 # power terms, etc.
 mtcars[,'mpg'] ^ 2
-
 
 # categorical variables
 mtcars[,"cyl"]
@@ -410,45 +443,49 @@ as.numeric(mtcars[,"cyl"] == 4)
 
 model.matrix(~ 0 + factor(cyl), data = mtcars)
 
-
-# intercept
+# intercept!
 cbind(1, X)
 
 \end{lstlisting}
 
 
-Another major issue with analyzing data is missingness. We cannot have missing values if we want to calculate most statistics or, for example, estimate a regression model. All data must be complete.
+A major issue with constructing a design matrix is missingness. By default, Stata, R, and other packages will use \textit{available case analysis}. We cannot have missing values if we want to calculate most statistics or, for example, estimate a regression model, so this is a reasonable approach but if we construct the design matrix manually, we also need to deal with missingness manually.
 
 \begin{lstlisting}
-
 # missing data
+NA
+x <- c(1,2,NA,4)
+x
 
-
-
-# imputation
-
+# simple, single imputation
+is.na(x)
+x[is.na(x)]
+x[is.na(x)] <- mean(x, na.rm = TRUE)
 
 # extracting complete cases
-complete.cases()
-
-
+d <- data.frame(a = 1:4, b = c(1,2,NA,4), c = c(1,NA,3,4))
+complete.cases(d)
+d[complete.cases(d), ]
 \end{lstlisting}
 
 
+\subsection{Matrix multiplication}
 
-
-
-
-
-
-Matrix multiplication. This is the dot product we saw earlier with vectors generalized to work for matrices.
+This is the dot product we saw earlier with vectors generalized to work for matrices.
 
 Matrices are conformable (i.e., can be multiplied) if they are \textit{m-by-n} and \textit{n-by-p}. So number of columns of the first matrix must match number of rows of the second matrix. Otherwise, non-conformable.
 
 The output matrix from matrix multiplication is an \textit{m-by-p} matrix.
 
 \begin{lstlisting}
-mmdemo <- function(A,B){
+# inner product (or dot product) of two vectors
+1:3 %*% 2:4
+1*2 + 2*3 + 3*4
+
+# dot product only works for conformable vectors or matrices!
+1:3 %*% 1:2
+
+mm <- function(A,B){
     m <- nrow(A)
     n <- ncol(B)
     C <- matrix(NA,nrow=m,ncol=n)
@@ -466,29 +503,31 @@ B <- matrix(2:5, nrow = 2)
 
 A %*% B
 B %*% A # non-conformable
+mm(A,B)
 
 # dimension of output
 A <- matrix(1:30, ncol = 3)
 B <- matrix(1:3, nrow = 3)
 A %*% B
-
+mm(A,B)
 
 # multiplication
 A <- matrix(rep(2, 6), ncol = 2)
 B <- matrix(1:4, nrow = 2)
 # DO THIS BY HAND
+mm(A,B)
 
 A <- matrix(c(5,3,2,1,7,4), ncol = 2)
 B <- matrix(c(2,5,6,2,1,7,4,1), nrow = 2)
 # DO THIS BY HAND
-
 #A %*% B
-#mmdemo(A,B)
-
+#mm(A,B)
 \end{lstlisting}
 
 
 Multiplication of a diagonal matrix is nice because of lots of zeros. Similar for an upper or lower triangular matrix.
+
+Multiplication by identity matrix is just itself.
 
 \begin{lstlisting}
 # multiply by diagonal matrix
@@ -496,8 +535,8 @@ A <- matrix(1:12, ncol = 3)
 B <- diag(1:3)
 A %*% B
 
-# multiply by triangular matrix
-
+# multiplication by an I identity matrix
+matrix(1:9, nrow = 3) %*% diag(3)
 \end{lstlisting}
 
 Some properties:
@@ -509,8 +548,6 @@ Some properties:
 \item Additive: $(\matr{X} + \matr{Y})' = \matr{X}' + \matr{Y}'$
 \item Multiplicative: $(\matr{X}\matr{Y})' = \matr{Y}'\matr{X}'$, note reversed order
 \end{itemize}
-
-
 
 \subsection{Matrix inversion}
 
@@ -533,8 +570,6 @@ Note how the order of the terms in the product are reversed by inversion.
 Inverse of transpose is the transpose of the inverse.
 
 An \textbf{invertible} matrix has an inverse. This is also called a \textbf{nonsingular} matrix. A matrix that does not have an inverse is \textbf{noninvertible} or \textbf{singular}.
-
-% processes of inverting
 
 \begin{equation*}
 \begin{bmatrix}
@@ -564,7 +599,22 @@ An example (of a 2x2 matrix):
 \end{equation*}
 
 
-% add another example or two here
+Do this inversion by hand. First find the determinant, then follow the formula from above:
+\begin{equation*}
+\begin{bmatrix}
+ 2 & 3 \\
+ 4 & 5 \\
+\end{bmatrix}^{-1} = 
+\dfrac{1}{(2*5)-(3*4)}
+\begin{bmatrix}
+ 5 & -3 \\
+ -4 & 2 \\
+\end{bmatrix} = 
+\begin{bmatrix}
+ -2.5 & 1.5 \\
+ 2.0 & -1.0 \\
+\end{bmatrix}
+\end{equation*}
 
 
 
@@ -618,7 +668,7 @@ An \textit{orthnormal} matrix has the nice property: $\matr{M}'\matr{M} = \matr{
 \matr{\beta} & = \matr{R}^{-1}\matr{Q}'\matr{y}\\
 \end{align*}
 
-So we just have to invert the $\matr{R}$ upper-triangular matrix, which is easier. The inverse $\matr{R}^{-1}$ is also upper-triangular, which is easier to multiply.
+So we just have to invert the $\matr{R}$ upper-triangular matrix, which is easier because we can use a process called \texttt{back substitution} (the details of which are unimportant). The inverse $\matr{R}^{-1}$ is also upper-triangular, which is (as we know from earlier) also easier to multiply.
 
 We won't go over the details of the decomposition, but know that while we talk about estimating OLS using the full matrix notation, in practice we estimate it using a QR decomposition.
 
@@ -631,11 +681,14 @@ Q <- qr.Q(QR)
 \end{lstlisting}
 
 
-\clearpage
+Questions?
+
+
+
 \section{Formulae}
 
 
-Regression notation is R relies on objects called ``formulas''. Formulas are similar to regression notation in Stata but they provide more options for expressing complex regression models.
+Regression notation is R relies on an object class called ``formula''. Formulas are similar to regression notation in Stata but they provide more options for expressing complex regression models.
 
 \begin{lstlisting}
 mtcars
@@ -669,7 +722,6 @@ lm(mpg ~ hp + factor(cyl), data = mtcars)
 
 # `model.matrix`
 model.matrix(~ 0 + factor(cyl), data = mtcars)
-
 \end{lstlisting}
 
 

@@ -15,9 +15,9 @@
 \setlength{\parindent}{0pt}
 \renewcommand{\indent}{\hspace*{\tindent}}
 
-\title{Programming Basics}
+\title{R Programming Basics}
 \author{Thomas J. Leeper}
-\date{May 12, 2015}
+\date{May 20, 2015}
 
 \begin{document}
 
@@ -75,9 +75,15 @@ f(2)
 f(3)
 
 # multiple arguments
-f <- function(x,y) {
+f <- function(x, y) {
     x - y
 }
+
+# mutliple arguments, some defaults
+f <- function(x, y = 2) {
+    x - y
+}
+
 
 # return values
 f <- function(x) {
@@ -97,21 +103,71 @@ f(1:6)$mean
 
 \end{lstlisting}
 
-% argument recycling, again
+Some things to remember about functions:
 
-% environments and refrential transparency
+\begin{itemize}
 
+\item Argument recycling. Remember that vectorized operations almost always involve recycling, even if you don't expect it:
 
+\begin{lstlisting}
+f <- function(x, y) {
+  x + y
+}
+f(1:6, 2)
+f(1:6, 1:2)
+\end{lstlisting}
 
-% dispatch (print, summary, etc.)
+\item Environments: A confusing aspect of functions is the notion of an \textit{evaluation environment}. Inside a function, variables take on values as specified by the function's arguments. If no value is specified for an argument and the argument has no default value, the function will fail to work:
 
+\begin{lstlisting}
+f <- function(x) x^2
+f()
+\end{lstlisting}
 
+\item Variable scope: A more complicated issue relates to how variables that are not function arguments are handled inside functions:
 
+\begin{lstlisting}
+z <- 1
+f <- function(x) {
+  x + z
+}
+f()
+f(1)
+\end{lstlisting}
+
+In the above example, \texttt{z} is taken from the function's \textit{parent environment}. This can create confusion because a function can both retrieve variables from its parent environment and modify the values of those variables. Both of these lack \textit{referential transparency} because calling a function on an object can result in the original object being modified. Stata actually works entirely on violating the notion of the referential transparency, so this is an important distinction between how R and Stata behave.\footnote{You can violate referential transparency in R, and there is in principle nothing wrong with that but it can create confusion if you are unprepared for it.}
+
+\item Generic functions and method dispatch: R implements a system of functional programming that involves ``generic'' functions and class-specific methods. This means that the same function (e.g., \texttt{print} or \texttt{summary}) can be used to produce different results for objects of different classes. A classic example of this is \texttt{summary}, which produces radically different output for different kinds of objects:
+
+\begin{lstlisting}
+summary(mtcars)
+summary(mtcars$cyl)
+summary(lm(mpg ~ cyl, data = mtcars))
+\end{lstlisting}
+
+\item Lazy evaluation: This is not important for your assignment but it might be something you encounter. Arguments to functions are evaluated \texttt{lazily}, which means that they are not evaluated until they are actually requested by a function, which means they may do things you find unintuitive:
+
+\begin{lstlisting}
+x <- 1
+z <- 1
+f <- function(x, z = x^2) z
+f(x = 2) # what do you expect this to be?
+f(z = 2) # what do you expect this to be?
+\end{lstlisting}
+
+\end{itemize}
+
+Questions?
 
 
 \section{Repeated Operations}
 
-Looping: \texttt{for}
+In order to do many computation tasks, we need to be able to repeat an R expression multiple times or evaluate a function over a range of values. We can write vectorized functions to do some of this, but not always. The following are some strategies for repeating code.
+
+
+\begin{itemize}
+
+\item Looping: \texttt{for}
 
 \begin{lstlisting}
 for(i in c(1,2,3)) {
@@ -126,7 +182,7 @@ for(i in seq_along(x)) {
 
 
 
-Looping: \texttt{while}
+\item Looping: \texttt{while}
 
 \begin{lstlisting}
 x <- TRUE
@@ -140,7 +196,7 @@ while(x) {
 \end{lstlisting}
 
 
-The \texttt{apply} and \texttt{*apply}-family functions
+\item The \texttt{apply} and \texttt{*apply}-family functions
 
 
 \begin{lstlisting}
@@ -154,13 +210,14 @@ apply(m, 2, sum)
 
 
 # Use `mapply`
-
-
-
+f <- function(x, y) {
+  x + y
+}
+mapply(f, x = 1:3, y = 1:3)
 \end{lstlisting}
 
 
-Using \texttt{replicate} to repeat an expression
+\item Using \texttt{replicate} to repeat an expression
 
 \begin{lstlisting}
 rnorm(1) + rnorm(1)
@@ -168,14 +225,31 @@ replicate(5, rnorm(1) + rnorm(1))
 \end{lstlisting}
 
 
+\end{itemize}
 
-Generating random numbers and using \texttt{sample}
+
+Questions?
+
+\section{Simulation Methods}
+
+Simulation methods allow us to solve lots of problems when we either (1) cannot find a closed form mathematical solution to a statistical problem and/or (2) when we think it is inappropriate to rely on a particular parametric assumption (e.g., that a statistic is normally distributed). Simulation methods involve sampling and/or random number generation in tandem with repeated evaluation of a function or expression.
+
+\begin{itemize}
+
+\item Generating random numbers and using \texttt{sample}
 
 \begin{lstlisting}
+# pseudo-RNG
 rnorm(1)
 rnorm(5)
 rnorm(5, mean = 3, sd = 2)
 rpois(5, 3)
+
+# set RNG seed
+set.seed(1)
+rnorm(5)
+set.seed(1)
+rnorm(5)
 
 # sample
 sample(2:6, 1)
@@ -183,16 +257,7 @@ sample(2:6, 5)
 sample(2:6, 10, TRUE)
 \end{lstlisting}
 
-
-
-\clearpage
-\section{Simulation Methods}
-
-
-
-% monte carlo
-
-
+\item Simple repeated sampling
 
 \begin{lstlisting}
 set.seed(1)
@@ -212,9 +277,7 @@ sd(r1)
 sd(r2)
 \end{lstlisting}
 
-Bootstrap
-
-Useful for estimating variance/SD/SE for estimators that do not have a closed form variance calculation, and in many other contexts (e.g., non-independent observations, etc.). Let's look at a simple example: median.
+\item The Bootstrap. This is useful for estimating variance/SD/SE for estimators that do not have a closed form variance calculation, and in many other contexts (e.g., non-independent observations, etc.). Let's look at a simple example: median.
 
 \begin{lstlisting}
 set.seed(1)
@@ -238,17 +301,11 @@ mean(b) # mean of bootstrapped medians
 sd(b) # sd of bootstrapped medians
 
 quantile(b, c(0.025,0.975)) # 95 % CI for median
-
-
-
 \end{lstlisting}
 
 
 
-
-
-
-Bootstrap OLS
+\item Bootstrapping OLS
 
 \begin{lstlisting}
 # function to estimate model one time
@@ -289,20 +346,7 @@ colMeans(jackmat, na.rm = TRUE)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-Jackknife
+\item Jackknife
 
 \begin{lstlisting}
 set.seed(1)
@@ -315,12 +359,15 @@ for(i in seq_along(s)) j[i] <- mean(s[-i])
 mean(s)
 sd(s)
 quantile(s, c(0.025, 0.975))
-
 \end{lstlisting}
 
+\end{itemize}
 
 
-\clearpage
+
+Questions? 
+
+
 \section{Optimization}
 
 Recall the objective of maximum likelihood estimation. We have some data which represent a sample from a population. The population distribution is governed by some parameters, $\theta$, and we want to use our sample data to estimate (or infer) the values of those parameters. MLE is the process of finding the values of $\theta$ that make our sample data most likely. In other words, given $\theta$ takes some set of values, how likely are we to observe the data we actually saw? If $\theta$ had some other set of values, how likely would we be to observe our data? etc. etc.
@@ -441,7 +488,7 @@ How do we obtain the MLE of this model? We have to start by writing out a likeli
 
 \begin{align*}
 \lik(\beta) & = \prod_{i=1}^{n} (\pi_i)^{y_i} (1-\pi_i)^(1-y_i)\\
-\ln\lik(\beta) & = \sum_{i=1}^{n} \ln((\pi_i)^{y_i} (1-\pi_i)^(1-y_i)) \\
+\ln\lik(\beta) & = \sum_{i=1}^{n} \ln((\pi_i)^{y_i} (1-\pi_i)^{1-y_i}) \\
  & = \sum_{i=1}^{n} y_i \ln(\pi_i) + (1-y_i) \ln(1-\pi_i)\\
  & = \sum_{i=1}^{n} y_i \ln(\phi(X_i\beta)) + (1-y_i) \ln(1-\phi(X_i\beta))
 \end{align*}
@@ -506,6 +553,6 @@ sqrt(diag(solve(-opt$hessian)))
 summary(m)
 \end{lstlisting}
 
-
+Questions?
 
 \end{document}

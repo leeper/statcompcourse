@@ -311,12 +311,6 @@ quantile(b, c(0.025,0.975)) # 95 % CI for median
 # function to estimate model one time
 once <- function(X, y) {
     b <- solve(t(X) %*% X) %*% t(X) %*% y
-    fitted <- X %*% b
-    e <- fitted - y
-    df <- nrow(X) - length(b)
-    s2 <- (t(e) %*% e) / df
-    V <- as.numeric(s2) * solve(t(X) %*% X)
-    sqrt(diag(V))
 }
 
 # bootstrap
@@ -330,7 +324,10 @@ for(i in 1:n) {
     if(!inherits(tried, 'try-error'))
         bootmat[i,] <- tried
 }
-colMeans(bootmat, na.rm = TRUE)
+# bootstrapped coefficient estimates
+apply(bootmat, 2, mean, na.rm = TRUE)
+# bootstrapped standard errors
+apply(bootmat, 2, sd, na.rm = TRUE)
 
 # jackknife
 jackmat <- matrix(numeric(), ncol = 3, nrow = nrow(X))
@@ -341,7 +338,10 @@ for(i in 1:nrow(X)) {
     if(!inherits(tried, 'try-error'))
         jackmat[i,] <- tried
 }
-colMeans(jackmat, na.rm = TRUE)
+# bootstrapped coefficient estimates
+apply(jackmat, 2, mean, na.rm = TRUE)
+# bootstrapped standard errors
+apply(jackmat, 2, sd, na.rm = TRUE)
 \end{lstlisting}
 
 
@@ -524,7 +524,7 @@ tmp <- grid_search
 tmp[tmp == -Inf] <- -1e3
 persp(x = iseq, y = sseq, z = matrix(tmp, nrow = length(iseq)), 
       xlim = c(-5, 5), ylim = c(-0.1, 0.1), zlim = c(-1e3, 0), 
-      ticktype = 'detailed', theta = 45, phi = 20, 
+      theta = 45, phi = 20, 
       shade = 0.25, col = 'lightblue', border = NA)
 
 # heatmap of log-likelihood function

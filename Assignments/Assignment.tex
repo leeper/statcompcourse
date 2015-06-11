@@ -1,20 +1,64 @@
-\documentclass[a4paper,12pt]{article}
+\documentclass[a4paper,12pt]{article}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
 \usepackage[margin=1in]{geometry}
 \usepackage{setspace}
 \usepackage{hyperref}
-\usepackage{listings}
-    \lstset{basicstyle=\singlespacing\footnotesize\ttfamily}
 \usepackage{amsmath}
-\usepackage{comment}
-    \excludecomment{solution}
-    %\includecomment{solution}
 \newcommand{\matr}[1]{\mathbf{#1}}
 \newcommand{\lik}{\mathcal{L}}
 
 \title{Regression Computation Assignment}
 \author{}
 \date{}
-
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
 
 \vspace{-5em}
@@ -27,27 +71,33 @@
 
 {\onehalfspacing
 
+
+
 \section*{Purpose and Overview}
 
 The purpose of this assignment is for you to demonstrate your understanding of the mathematics and computational procedures involved in the estimation of basic regression models. Below are several regression models. The first two (\texttt{m1} and \texttt{m2}) are OLS models explaining life expectancy and the latter two (\texttt{m3} and \texttt{m4}) are logistic regression models explaining democracy. All data are drawn from the Quality of Government Basic Dataset. The data and codebook are available here: \url{http://qog.pol.gu.se/data/datadownloads/qogbasicdata}.
 
-\begin{lstlisting}
-d <- rio::import("http://www.qogdata.pol.gu.se/data/qog_bas_cs_jan15.csv")
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{d} \hlkwb{<-} \hlstd{rio}\hlopt{::}\hlkwd{import}\hlstd{(}\hlstr{"http://www.qogdata.pol.gu.se/data/qog_bas_cs_jan15.csv"}\hlstd{)}
 
-f1 <- une_leb ~ I(gle_cgdpc/1e4) + I(ross_oil_netexpc/1e3)
-m1 <- lm(f1, data = d)
+\hlstd{f1} \hlkwb{<-} \hlstd{une_leb} \hlopt{~} \hlkwd{I}\hlstd{(gle_cgdpc}\hlopt{/}\hlnum{1e4}\hlstd{)} \hlopt{+} \hlkwd{I}\hlstd{(ross_oil_netexpc}\hlopt{/}\hlnum{1e3}\hlstd{)}
+\hlstd{m1} \hlkwb{<-} \hlkwd{lm}\hlstd{(f1,} \hlkwc{data} \hlstd{= d)}
 
-f2 <- une_leb ~ I(gle_cgdpc/1e4)*factor(chga_demo) + 
-                I(ross_oil_netexpc/1e3) + factor(ht_colonial)
-m2 <- lm(f2, data = d)
+\hlstd{f2} \hlkwb{<-} \hlstd{une_leb} \hlopt{~} \hlkwd{I}\hlstd{(gle_cgdpc}\hlopt{/}\hlnum{1e4}\hlstd{)}\hlopt{*}\hlkwd{factor}\hlstd{(chga_demo)} \hlopt{+}
+                \hlkwd{I}\hlstd{(ross_oil_netexpc}\hlopt{/}\hlnum{1e3}\hlstd{)} \hlopt{+} \hlkwd{factor}\hlstd{(ht_colonial)}
+\hlstd{m2} \hlkwb{<-} \hlkwd{lm}\hlstd{(f2,} \hlkwc{data} \hlstd{= d)}
 
-f3 <- chga_demo ~ al_ethnic
-m3 <- glm(f3, data = d, family = binomial(link='logit'))
+\hlstd{f3} \hlkwb{<-} \hlstd{chga_demo} \hlopt{~} \hlstd{al_ethnic}
+\hlstd{m3} \hlkwb{<-} \hlkwd{glm}\hlstd{(f3,} \hlkwc{data} \hlstd{= d,} \hlkwc{family} \hlstd{=} \hlkwd{binomial}\hlstd{(}\hlkwc{link}\hlstd{=}\hlstr{'logit'}\hlstd{))}
 
-f4 <- chga_demo ~ al_ethnic + I(log(wdi_landarea)) + 
-                  I(gle_cgdpc/1e4) + I(ross_oil_netexpc/1e3)
-m4 <- glm(f4, data = d, family = binomial(link='logit'))
-\end{lstlisting}
+\hlstd{f4} \hlkwb{<-} \hlstd{chga_demo} \hlopt{~} \hlstd{al_ethnic} \hlopt{+} \hlkwd{I}\hlstd{(}\hlkwd{log}\hlstd{(wdi_landarea))} \hlopt{+}
+                  \hlkwd{I}\hlstd{(gle_cgdpc}\hlopt{/}\hlnum{1e4}\hlstd{)} \hlopt{+} \hlkwd{I}\hlstd{(ross_oil_netexpc}\hlopt{/}\hlnum{1e3}\hlstd{)}
+\hlstd{m4} \hlkwb{<-} \hlkwd{glm}\hlstd{(f4,} \hlkwc{data} \hlstd{= d,} \hlkwc{family} \hlstd{=} \hlkwd{binomial}\hlstd{(}\hlkwc{link}\hlstd{=}\hlstr{'logit'}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 \vspace{1em}
 \noindent Your task is to reproduce parts of these analyses using R (or Stata), without the use of the \texttt{lm}, \texttt{glm}, \texttt{lm.fit}, or similar ready-made functions (or, for Stata, without the use of \texttt{reg}, \texttt{logit}, \texttt{glm}, or similar commands). The instructions below outline the code you should produce. You may use R (based on techniques from lecture) or Stata (for relevant technical details on Stata, see Ch. 11 and Appendix A from Cameron and Trivedi 2010).
@@ -68,81 +118,89 @@ m4 <- glm(f4, data = d, family = binomial(link='logit'))
 
 \item Construct a design matrix $\matr{X}$ for \texttt{m1}. Extract the $\matr{R}$ matrix from the $\matr{Q}\matr{R}$ decomposition of $\matr{X}$. Write code to produce this matrix using the formula given in class for the inverse of a 3-by-3 matrix.
 
-\begin{solution}
-\begin{lstlisting}
-# Design matrix
-dat <- cbind(1, d$gle_cgdpc/1e4, d$ross_oil_netexpc/1e3)
-cc <- complete.cases(dat)
-X <- dat[cc,]
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# Design matrix}
+\hlstd{dat} \hlkwb{<-} \hlkwd{cbind}\hlstd{(}\hlnum{1}\hlstd{, d}\hlopt{$}\hlstd{gle_cgdpc}\hlopt{/}\hlnum{1e4}\hlstd{, d}\hlopt{$}\hlstd{ross_oil_netexpc}\hlopt{/}\hlnum{1e3}\hlstd{)}
+\hlstd{cc} \hlkwb{<-} \hlkwd{complete.cases}\hlstd{(dat)}
+\hlstd{X} \hlkwb{<-} \hlstd{dat[cc,]}
 
-# QR decomposition
-QR <- qr(X)
-R <- qr.R(QR)
-R
+\hlcom{# QR decomposition}
+\hlstd{QR} \hlkwb{<-} \hlkwd{qr}\hlstd{(X)}
+\hlstd{R} \hlkwb{<-} \hlkwd{qr.R}\hlstd{(QR)}
+\hlstd{R}
 
-# inverse of the R matrix, manually
-matrix(c(R[2,2] * R[3,3] - R[2,3] * R[3,2],
-         -(R[2,1] * R[3,3] - R[2,3] * R[3,1]),
-         R[2,1] * R[3,2] - R[2,2] * R[3,1],
-         -(R[1,2] * R[3,3] - R[1,3] * R[3,2]),
-         R[1,1] * R[3,3] - R[1,3] * R[3,1],
-         -(R[1,1] * R[3,2] - R[1,2] * R[3,1]),
-         R[1,2] * R[2,3] - R[1,3] * R[2,2],
-         -(R[1,1] * R[2,3] - R[1,3] * R[2,1]),
-         R[1,1] * R[2,2] - R[1,2] * R[2,1]), nrow = 3) * (1/det(R))
+\hlcom{# inverse of the R matrix, manually}
+\hlkwd{matrix}\hlstd{(}\hlkwd{c}\hlstd{(R[}\hlnum{2}\hlstd{,}\hlnum{2}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{3}\hlstd{,}\hlnum{3}\hlstd{]} \hlopt{-} \hlstd{R[}\hlnum{2}\hlstd{,}\hlnum{3}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{3}\hlstd{,}\hlnum{2}\hlstd{],}
+         \hlopt{-}\hlstd{(R[}\hlnum{2}\hlstd{,}\hlnum{1}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{3}\hlstd{,}\hlnum{3}\hlstd{]} \hlopt{-} \hlstd{R[}\hlnum{2}\hlstd{,}\hlnum{3}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{3}\hlstd{,}\hlnum{1}\hlstd{]),}
+         \hlstd{R[}\hlnum{2}\hlstd{,}\hlnum{1}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{3}\hlstd{,}\hlnum{2}\hlstd{]} \hlopt{-} \hlstd{R[}\hlnum{2}\hlstd{,}\hlnum{2}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{3}\hlstd{,}\hlnum{1}\hlstd{],}
+         \hlopt{-}\hlstd{(R[}\hlnum{1}\hlstd{,}\hlnum{2}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{3}\hlstd{,}\hlnum{3}\hlstd{]} \hlopt{-} \hlstd{R[}\hlnum{1}\hlstd{,}\hlnum{3}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{3}\hlstd{,}\hlnum{2}\hlstd{]),}
+         \hlstd{R[}\hlnum{1}\hlstd{,}\hlnum{1}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{3}\hlstd{,}\hlnum{3}\hlstd{]} \hlopt{-} \hlstd{R[}\hlnum{1}\hlstd{,}\hlnum{3}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{3}\hlstd{,}\hlnum{1}\hlstd{],}
+         \hlopt{-}\hlstd{(R[}\hlnum{1}\hlstd{,}\hlnum{1}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{3}\hlstd{,}\hlnum{2}\hlstd{]} \hlopt{-} \hlstd{R[}\hlnum{1}\hlstd{,}\hlnum{2}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{3}\hlstd{,}\hlnum{1}\hlstd{]),}
+         \hlstd{R[}\hlnum{1}\hlstd{,}\hlnum{2}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{2}\hlstd{,}\hlnum{3}\hlstd{]} \hlopt{-} \hlstd{R[}\hlnum{1}\hlstd{,}\hlnum{3}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{2}\hlstd{,}\hlnum{2}\hlstd{],}
+         \hlopt{-}\hlstd{(R[}\hlnum{1}\hlstd{,}\hlnum{1}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{2}\hlstd{,}\hlnum{3}\hlstd{]} \hlopt{-} \hlstd{R[}\hlnum{1}\hlstd{,}\hlnum{3}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{2}\hlstd{,}\hlnum{1}\hlstd{]),}
+         \hlstd{R[}\hlnum{1}\hlstd{,}\hlnum{1}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{2}\hlstd{,}\hlnum{2}\hlstd{]} \hlopt{-} \hlstd{R[}\hlnum{1}\hlstd{,}\hlnum{2}\hlstd{]} \hlopt{*} \hlstd{R[}\hlnum{2}\hlstd{,}\hlnum{1}\hlstd{]),} \hlkwc{nrow} \hlstd{=} \hlnum{3}\hlstd{)} \hlopt{*} \hlstd{(}\hlnum{1}\hlopt{/}\hlkwd{det}\hlstd{(R))}
 
-# check inverse of the R matrix, automatically
-solve(R)
-\end{lstlisting}
-\end{solution}
+\hlcom{# check inverse of the R matrix, automatically}
+\hlkwd{solve}\hlstd{(R)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 \item Create a vector \texttt{y} to represent the outcome. Then construct an appropriate design matrix $\matr{X}$ for \texttt{m2} (as represented by formula \texttt{f2}) from the original variables in the dataset, including the specified categorical (factor) variables and interaction term (see Fox pp.153--155). Note: Be careful handling missing values!
 
-\begin{solution}
-\begin{lstlisting}
-# define `y`
-y <- d$une_leb
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# define `y`}
+\hlstd{y} \hlkwb{<-} \hlstd{d}\hlopt{$}\hlstd{une_leb}
 
-# call `model.matrix` directly to create design matrix:
-X <- model.matrix(f2, data = d)
+\hlcom{# call `model.matrix` directly to create design matrix:}
+\hlstd{X} \hlkwb{<-} \hlkwd{model.matrix}\hlstd{(f2,} \hlkwc{data} \hlstd{= d)}
 
-# manual alternative:
-x1 <- d$gle_cgdpc/10000
-x2 <- d$chga_demo
-x3 <- x1*x2
-x4 <- d$ross_oil_netexpc/1000
-u <- sort(unique(d$ht_colonial))
-x5 <- matrix(NA, nrow = nrow(d), ncol = length(u))
-for(i in seq_along(u)) {
-    x5[,i] <- as.numeric(d$ht_colonial == u[i])
-}
-dat <- cbind(y, 1, x1, x2, x3, x4, x5)
-cc <- complete.cases(dat)
-X <- dat[cc, -1]
-colnames(X) <- c('Intercept', 'gle_cgdpc', 'chga_demo', 'gle_cgdpc*chga_demo', 'ross_oil_netexpc',
-                 paste0('ht_colonial', u))
-X <- X[, !colnames(X) %in% c('ht_colonial0', 'ht_colonial9')] # drop linearly dependent columns
+\hlcom{# manual alternative:}
+\hlstd{x1} \hlkwb{<-} \hlstd{d}\hlopt{$}\hlstd{gle_cgdpc}\hlopt{/}\hlnum{10000}
+\hlstd{x2} \hlkwb{<-} \hlstd{d}\hlopt{$}\hlstd{chga_demo}
+\hlstd{x3} \hlkwb{<-} \hlstd{x1}\hlopt{*}\hlstd{x2}
+\hlstd{x4} \hlkwb{<-} \hlstd{d}\hlopt{$}\hlstd{ross_oil_netexpc}\hlopt{/}\hlnum{1000}
+\hlstd{u} \hlkwb{<-} \hlkwd{sort}\hlstd{(}\hlkwd{unique}\hlstd{(d}\hlopt{$}\hlstd{ht_colonial))}
+\hlstd{x5} \hlkwb{<-} \hlkwd{matrix}\hlstd{(}\hlnum{NA}\hlstd{,} \hlkwc{nrow} \hlstd{=} \hlkwd{nrow}\hlstd{(d),} \hlkwc{ncol} \hlstd{=} \hlkwd{length}\hlstd{(u))}
+\hlkwa{for}\hlstd{(i} \hlkwa{in} \hlkwd{seq_along}\hlstd{(u)) \{}
+    \hlstd{x5[,i]} \hlkwb{<-} \hlkwd{as.numeric}\hlstd{(d}\hlopt{$}\hlstd{ht_colonial} \hlopt{==} \hlstd{u[i])}
+\hlstd{\}}
+\hlstd{dat} \hlkwb{<-} \hlkwd{cbind}\hlstd{(y,} \hlnum{1}\hlstd{, x1, x2, x3, x4, x5)}
+\hlstd{cc} \hlkwb{<-} \hlkwd{complete.cases}\hlstd{(dat)}
+\hlstd{X} \hlkwb{<-} \hlstd{dat[cc,} \hlopt{-}\hlnum{1}\hlstd{]}
+\hlkwd{colnames}\hlstd{(X)} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{'Intercept'}\hlstd{,} \hlstr{'gle_cgdpc'}\hlstd{,} \hlstr{'chga_demo'}\hlstd{,}
+                 \hlstr{'gle_cgdpc*chga_demo'}\hlstd{,} \hlstr{'ross_oil_netexpc'}\hlstd{,}
+                 \hlkwd{paste0}\hlstd{(}\hlstr{'ht_colonial'}\hlstd{, u))}
+\hlcom{# drop linearly dependent columns}
+\hlstd{X} \hlkwb{<-} \hlstd{X[,} \hlopt{!}\hlkwd{colnames}\hlstd{(X)} \hlopt{%in%} \hlkwd{c}\hlstd{(}\hlstr{'ht_colonial0'}\hlstd{,} \hlstr{'ht_colonial9'}\hlstd{)]}
 
-# pass complete cases to `y`
-y <- dat[cc, 1]
-\end{lstlisting}
-\end{solution}
+\hlcom{# pass complete cases to `y`}
+\hlstd{y} \hlkwb{<-} \hlstd{dat[cc,} \hlnum{1}\hlstd{]}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 
 \item Estimate the Ordinary Least Squares (OLS) coefficients in \texttt{m2} using matrix notation (see Fox p.155). You may use a QR decomposition if you so choose.
 
-\begin{solution}
-\begin{lstlisting}
-# using standard matrix notation (X'X)^{-1}X'y
-beta <- solve(t(X) %*% X) %*% t(X) %*% y
-beta
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# using standard matrix notation (X'X)^\{-1\}X'y}
+\hlstd{beta} \hlkwb{<-} \hlkwd{solve}\hlstd{(}\hlkwd{t}\hlstd{(X)} \hlopt{%*%} \hlstd{X)} \hlopt{%*%} \hlkwd{t}\hlstd{(X)} \hlopt{%*%} \hlstd{y}
+\hlstd{beta}
 
-# using a QR decomposition
-decomp <- qr(X)
-beta <- solve(qr.R(decomp)) %*% t(qr.Q(decomp)) %*% y
-beta
-\end{lstlisting}
-\end{solution}
+\hlcom{# using a QR decomposition}
+\hlstd{decomp} \hlkwb{<-} \hlkwd{qr}\hlstd{(X)}
+\hlstd{beta} \hlkwb{<-} \hlkwd{solve}\hlstd{(}\hlkwd{qr.R}\hlstd{(decomp))} \hlopt{%*%} \hlkwd{t}\hlstd{(}\hlkwd{qr.Q}\hlstd{(decomp))} \hlopt{%*%} \hlstd{y}
+\hlstd{beta}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 \item Obtain the fitted values (where $\matr{\hat{y}} = \matr{X}\matr{\hat{\beta}}$), from model \texttt{m2} with all variables held at their observed values, except:
 
@@ -153,67 +211,79 @@ beta
 \item \texttt{ht\_colonial} = 0
 \end{itemize}
 
-\begin{solution}
-\begin{lstlisting}
-Xtmp <- X
-Xtmp[,'gle_cgdpc'] <- 10000
-Xtmp[,'chga_demo'] <- 1
-Xtmp[,'ross_oil_netexpc'] <- 1000
-# redefine all `ht_colonial` columns:
-Xtmp[,grepl('ht_colonial',colnames(Xtmp))] <- 0
-# or manually:
-Xtmp[,'ht_colonial1'] <- 0
-Xtmp[,'ht_colonial2'] <- 0
-Xtmp[,'ht_colonial3'] <- 0
-Xtmp[,'ht_colonial4'] <- 0
-Xtmp[,'ht_colonial5'] <- 0
-Xtmp[,'ht_colonial6'] <- 0
-Xtmp[,'ht_colonial7'] <- 0
-Xtmp[,'ht_colonial8'] <- 0
-#Xtmp[,'ht_colonial9'] <- 0 # dropped previously
-Xtmp[,'ht_colonial10'] <- 0
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{Xtmp} \hlkwb{<-} \hlstd{X}
+\hlstd{Xtmp[,}\hlstr{'gle_cgdpc'}\hlstd{]} \hlkwb{<-} \hlnum{10000}
+\hlstd{Xtmp} \hlopt{%*%} \hlstd{beta}
 
-fitted <- Xtmp %*% beta
-fitted
-\end{lstlisting}
-\end{solution}
+\hlstd{Xtmp} \hlkwb{<-} \hlstd{X}
+\hlstd{Xtmp[,}\hlstr{'chga_demo'}\hlstd{]} \hlkwb{<-} \hlnum{1}
+\hlstd{Xtmp} \hlopt{%*%} \hlstd{beta}
+
+\hlstd{Xtmp} \hlkwb{<-} \hlstd{X}
+\hlstd{Xtmp[,}\hlstr{'ross_oil_netexpc'}\hlstd{]} \hlkwb{<-} \hlnum{1000}
+\hlstd{Xtmp} \hlopt{%*%} \hlstd{beta}
+
+\hlstd{Xtmp} \hlkwb{<-} \hlstd{X}
+\hlcom{# redefine all `ht_colonial` columns:}
+\hlstd{Xtmp[,}\hlkwd{grepl}\hlstd{(}\hlstr{'ht_colonial'}\hlstd{,}\hlkwd{colnames}\hlstd{(Xtmp))]} \hlkwb{<-} \hlnum{0}
+\hlcom{# or manually:}
+\hlstd{Xtmp[,}\hlstr{'ht_colonial1'}\hlstd{]} \hlkwb{<-} \hlnum{0}
+\hlstd{Xtmp[,}\hlstr{'ht_colonial2'}\hlstd{]} \hlkwb{<-} \hlnum{0}
+\hlstd{Xtmp[,}\hlstr{'ht_colonial3'}\hlstd{]} \hlkwb{<-} \hlnum{0}
+\hlstd{Xtmp[,}\hlstr{'ht_colonial4'}\hlstd{]} \hlkwb{<-} \hlnum{0}
+\hlstd{Xtmp[,}\hlstr{'ht_colonial5'}\hlstd{]} \hlkwb{<-} \hlnum{0}
+\hlstd{Xtmp[,}\hlstr{'ht_colonial6'}\hlstd{]} \hlkwb{<-} \hlnum{0}
+\hlstd{Xtmp[,}\hlstr{'ht_colonial7'}\hlstd{]} \hlkwb{<-} \hlnum{0}
+\hlstd{Xtmp[,}\hlstr{'ht_colonial8'}\hlstd{]} \hlkwb{<-} \hlnum{0}
+\hlcom{#Xtmp[,'ht_colonial9'] <- 0 # dropped previously}
+\hlstd{Xtmp[,}\hlstr{'ht_colonial10'}\hlstd{]} \hlkwb{<-} \hlnum{0}
+\hlstd{Xtmp} \hlopt{%*%} \hlstd{beta}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 \item Estimate the variance-covariance matrix of the OLS coefficient estimates for \texttt{m2} and extract estimated standard errors from that matrix (see Fox p.158).
 
-\begin{solution}
-\begin{lstlisting}
-# Var(beta) = S^2 (X'X)^{-1}
-# S^2 = (e'e) / (n - k - 1)
-e <- fitted - y
-df <- nrow(X) - length(b)
-s2 <- (t(e) %*% e) / df
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{fitted} \hlkwb{<-} \hlstd{X} \hlopt{%*%} \hlstd{beta}
+\hlstd{e} \hlkwb{<-} \hlstd{fitted} \hlopt{-} \hlstd{y}
+\hlstd{df} \hlkwb{<-} \hlkwd{nrow}\hlstd{(X)} \hlopt{-} \hlkwd{length}\hlstd{(beta)}
+\hlstd{s2} \hlkwb{<-} \hlstd{(}\hlkwd{t}\hlstd{(e)} \hlopt{%*%} \hlstd{e)} \hlopt{/} \hlstd{df}
 
-# variance-covariance matrix
-V <- as.numeric(s2) * solve(t(X) %*% X)
+\hlcom{# variance-covariance matrix}
+\hlstd{V} \hlkwb{<-} \hlkwd{as.numeric}\hlstd{(s2)} \hlopt{*} \hlkwd{solve}\hlstd{(}\hlkwd{t}\hlstd{(X)} \hlopt{%*%} \hlstd{X)}
 
-# standard errors
-sqrt(diag(V))
-\end{lstlisting}
-\end{solution}
+\hlcom{# standard errors}
+\hlkwd{sqrt}\hlstd{(}\hlkwd{diag}\hlstd{(V))}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 \item Use the estimated coefficients and standard errors for \texttt{m2} to obtain the \textit{t}-statistics for each coefficient estimate under a null hypothesis $H_0: \beta_k = 0$ (see Fox 3.3 and 4.4). Calculate the one-tailed and two-tailed p-values for each test statistic using the \texttt{pt} function, which returns the value of Student's \textit{t} cumulative distribution function.
 
-\begin{solution}
-\begin{lstlisting}
-tstats <- beta/sqrt(diag(V))
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{tstats} \hlkwb{<-} \hlstd{beta}\hlopt{/}\hlkwd{sqrt}\hlstd{(}\hlkwd{diag}\hlstd{(V))}
 
-# determine degrees of freedom for t-test
-ndf <- nrow(x) - length(beta)
+\hlcom{# determine degrees of freedom for t-test}
+\hlstd{ndf} \hlkwb{<-} \hlkwd{nrow}\hlstd{(X)} \hlopt{-} \hlkwd{length}\hlstd{(beta)}
 
-# one-tailed test (two alternative strategies)
-1-pt(abs(tstats), ndf)
-pt(-abs(tstats), ndf)
+\hlcom{# one-tailed test (two alternative strategies)}
+\hlnum{1}\hlopt{-}\hlkwd{pt}\hlstd{(}\hlkwd{abs}\hlstd{(tstats), ndf)}
+\hlkwd{pt}\hlstd{(}\hlopt{-}\hlkwd{abs}\hlstd{(tstats), ndf)}
 
-# two-tailed test (two alternative strategies)
-2*(1-pt(abs(tstats), ndf))
-2*pt(-abs(tstats), ndf)
-\end{lstlisting}
-\end{solution}
+\hlcom{# two-tailed test (two alternative strategies)}
+\hlnum{2}\hlopt{*}\hlstd{(}\hlnum{1}\hlopt{-}\hlkwd{pt}\hlstd{(}\hlkwd{abs}\hlstd{(tstats), ndf))}
+\hlnum{2}\hlopt{*}\hlkwd{pt}\hlstd{(}\hlopt{-}\hlkwd{abs}\hlstd{(tstats), ndf)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 
 \clearpage
@@ -225,158 +295,171 @@ pt(-abs(tstats), ndf)
 \end{align*}
 where $\pi_i$ in the logistic model is given by the inverse link function $\dfrac{e^{\matr{X}_i\beta}}{1 + e^{\matr{X}_i\beta}}$.
 
-\begin{solution}
-\begin{lstlisting}
-logitll <- function(beta, y, X){
-  p <- exp(X %*% beta)/(1+exp(X %*% beta))
-  lik <- y * log(p) + (1-y) * log(1-p)
-  sum(lik)
-}
-\end{lstlisting}
-\end{solution}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{logitll} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{beta}\hlstd{,} \hlkwc{y}\hlstd{,} \hlkwc{X}\hlstd{)\{}
+  \hlstd{p} \hlkwb{<-} \hlkwd{exp}\hlstd{(X} \hlopt{%*%} \hlstd{beta)}\hlopt{/}\hlstd{(}\hlnum{1}\hlopt{+}\hlkwd{exp}\hlstd{(X} \hlopt{%*%} \hlstd{beta))}
+  \hlstd{lik} \hlkwb{<-} \hlstd{y} \hlopt{*} \hlkwd{log}\hlstd{(p)} \hlopt{+} \hlstd{(}\hlnum{1}\hlopt{-}\hlstd{y)} \hlopt{*} \hlkwd{log}\hlstd{(}\hlnum{1}\hlopt{-}\hlstd{p)}
+  \hlkwd{sum}\hlstd{(lik)}
+\hlstd{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 
 \item Estimate the coefficients for \texttt{m3} using two methods of maximum likelihood estimation: (a) a grid search and (b) an optimization algorithm implemented by \texttt{optim}. For the grid search, search for possible slope and intercept coefficients in the range between -5 and +5.
 
-\begin{solution}
-\begin{lstlisting}
-dat <- cbind(d$chga_demo,1,d$al_ethnic)
-cc <- complete.cases(dat)
-Xm3 <- dat[cc,2:3]
-ym3 <- dat[cc,1]
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{dat} \hlkwb{<-} \hlkwd{cbind}\hlstd{(d}\hlopt{$}\hlstd{chga_demo,}\hlnum{1}\hlstd{,d}\hlopt{$}\hlstd{al_ethnic)}
+\hlstd{cc} \hlkwb{<-} \hlkwd{complete.cases}\hlstd{(dat)}
+\hlstd{Xm3} \hlkwb{<-} \hlstd{dat[cc,}\hlnum{2}\hlopt{:}\hlnum{3}\hlstd{]}
+\hlstd{ym3} \hlkwb{<-} \hlstd{dat[cc,}\hlnum{1}\hlstd{]}
 
-# grid search (could be more precise)
-iseq <- seq(-5, 5, by = 0.025)
-sseq <- seq(-5, 5, by = 0.025)
-g <- expand.grid(intercept = iseq, slope = sseq)
-gs <- apply(g, 1, function(z) logitll(beta = z, X = Xm3, y = ym3))
-g[which.max(gs), ]
+\hlcom{# grid search (could be more precise)}
+\hlstd{iseq} \hlkwb{<-} \hlkwd{seq}\hlstd{(}\hlopt{-}\hlnum{5}\hlstd{,} \hlnum{5}\hlstd{,} \hlkwc{by} \hlstd{=} \hlnum{0.025}\hlstd{)}
+\hlstd{sseq} \hlkwb{<-} \hlkwd{seq}\hlstd{(}\hlopt{-}\hlnum{5}\hlstd{,} \hlnum{5}\hlstd{,} \hlkwc{by} \hlstd{=} \hlnum{0.025}\hlstd{)}
+\hlstd{g} \hlkwb{<-} \hlkwd{expand.grid}\hlstd{(}\hlkwc{intercept} \hlstd{= iseq,} \hlkwc{slope} \hlstd{= sseq)}
+\hlstd{gs} \hlkwb{<-} \hlkwd{apply}\hlstd{(g,} \hlnum{1}\hlstd{,} \hlkwa{function}\hlstd{(}\hlkwc{z}\hlstd{)} \hlkwd{logitll}\hlstd{(}\hlkwc{beta} \hlstd{= z,} \hlkwc{X} \hlstd{= Xm3,} \hlkwc{y} \hlstd{= ym3))}
+\hlstd{g[}\hlkwd{which.max}\hlstd{(gs), ]}
 
-# optimization algorithm
-optm3 <- optim(par = rep(0, 2),
-               fn = logitll,
-               X = Xm3,
-               y = ym3,
-               control = list(fnscale = -1),
-               hessian = TRUE,
-               method = "BFGS")
-optm3$par
-\end{lstlisting}
-\end{solution}
+\hlcom{# optimization algorithm}
+\hlstd{optm3} \hlkwb{<-} \hlkwd{optim}\hlstd{(}\hlkwc{par} \hlstd{=} \hlkwd{rep}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{2}\hlstd{),}
+               \hlkwc{fn} \hlstd{= logitll,}
+               \hlkwc{X} \hlstd{= Xm3,}
+               \hlkwc{y} \hlstd{= ym3,}
+               \hlkwc{control} \hlstd{=} \hlkwd{list}\hlstd{(}\hlkwc{fnscale} \hlstd{=} \hlopt{-}\hlnum{1}\hlstd{),}
+               \hlkwc{hessian} \hlstd{=} \hlnum{TRUE}\hlstd{,}
+               \hlkwc{method} \hlstd{=} \hlstr{"BFGS"}\hlstd{)}
+\hlstd{optm3}\hlopt{$}\hlstd{par}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 \item Estimate the standard errors for coefficient estimates in \texttt{m3} using bootstrapping. 
 
-\begin{solution}
-\begin{lstlisting}
-# function to estimate model one time
-once <- function(X, y) {
-    opt <- optim(par = rep(0, 2),
-                 fn = logitll,
-                 X = X,
-                 y = y,
-                 control = list(fnscale = -1),
-                 hessian = TRUE,
-                 method = "BFGS")
-    opt$par
-}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# function to estimate model one time}
+\hlstd{once} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{X}\hlstd{,} \hlkwc{y}\hlstd{) \{}
+    \hlstd{opt} \hlkwb{<-} \hlkwd{optim}\hlstd{(}\hlkwc{par} \hlstd{=} \hlkwd{rep}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{2}\hlstd{),}
+                 \hlkwc{fn} \hlstd{= logitll,}
+                 \hlkwc{X} \hlstd{= X,}
+                 \hlkwc{y} \hlstd{= y,}
+                 \hlkwc{control} \hlstd{=} \hlkwd{list}\hlstd{(}\hlkwc{fnscale} \hlstd{=} \hlopt{-}\hlnum{1}\hlstd{),}
+                 \hlkwc{hessian} \hlstd{=} \hlnum{TRUE}\hlstd{,}
+                 \hlkwc{method} \hlstd{=} \hlstr{"BFGS"}\hlstd{)}
+    \hlstd{opt}\hlopt{$}\hlstd{par}
+\hlstd{\}}
 
-# bootstrap
-n <- 5000
-bootmat <- matrix(numeric(), ncol = 2, nrow = n)
-for(i in 1:n) {
-    s <- sample(1:nrow(X), nrow(X), TRUE)
-    Xtmp <- Xm3[s,]
-    ytmp <- ym3[s]
-    tried <- try(once(Xtmp, ytmp))
-    if(!inherits(tried, 'try-error'))
-        bootmat[i,] <- tried
-}
-apply(bootmat, 2, sd, na.rm = TRUE)
+\hlcom{# bootstrap}
+\hlstd{n} \hlkwb{<-} \hlnum{5000}
+\hlstd{bootmat} \hlkwb{<-} \hlkwd{matrix}\hlstd{(}\hlkwd{numeric}\hlstd{(),} \hlkwc{ncol} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{nrow} \hlstd{= n)}
+\hlkwa{for}\hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlstd{n) \{}
+    \hlstd{s} \hlkwb{<-} \hlkwd{sample}\hlstd{(}\hlnum{1}\hlopt{:}\hlkwd{nrow}\hlstd{(X),} \hlkwd{nrow}\hlstd{(X),} \hlnum{TRUE}\hlstd{)}
+    \hlstd{Xtmp} \hlkwb{<-} \hlstd{Xm3[s,]}
+    \hlstd{ytmp} \hlkwb{<-} \hlstd{ym3[s]}
+    \hlstd{tried} \hlkwb{<-} \hlkwd{try}\hlstd{(}\hlkwd{once}\hlstd{(Xtmp, ytmp))}
+    \hlkwa{if}\hlstd{(}\hlopt{!}\hlkwd{inherits}\hlstd{(tried,} \hlstr{'try-error'}\hlstd{))}
+        \hlstd{bootmat[i,]} \hlkwb{<-} \hlstd{tried}
+\hlstd{\}}
+\hlkwd{apply}\hlstd{(bootmat,} \hlnum{2}\hlstd{, sd,} \hlkwc{na.rm} \hlstd{=} \hlnum{TRUE}\hlstd{)}
 
-# jackknife (just for fun)
-jackmat <- matrix(numeric(), ncol = 2, nrow = nrow(X))
-for(i in 1:nrow(X)) {
-    Xtmp <- Xm3[-i,]
-    ytmp <- ym3[-i]
-    tried <- try(once(Xtmp, ytmp))
-    if(!inherits(tried, 'try-error'))
-        jackmat[i,] <- tried
-}
-apply(jackmat, 2, sd, na.rm = TRUE)
-\end{lstlisting}
-\end{solution}
+\hlcom{# jackknife (just for fun)}
+\hlstd{jackmat} \hlkwb{<-} \hlkwd{matrix}\hlstd{(}\hlkwd{numeric}\hlstd{(),} \hlkwc{ncol} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{nrow} \hlstd{=} \hlkwd{nrow}\hlstd{(X))}
+\hlkwa{for}\hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlkwd{nrow}\hlstd{(X)) \{}
+    \hlstd{Xtmp} \hlkwb{<-} \hlstd{Xm3[}\hlopt{-}\hlstd{i,]}
+    \hlstd{ytmp} \hlkwb{<-} \hlstd{ym3[}\hlopt{-}\hlstd{i]}
+    \hlstd{tried} \hlkwb{<-} \hlkwd{try}\hlstd{(}\hlkwd{once}\hlstd{(Xtmp, ytmp))}
+    \hlkwa{if}\hlstd{(}\hlopt{!}\hlkwd{inherits}\hlstd{(tried,} \hlstr{'try-error'}\hlstd{))}
+        \hlstd{jackmat[i,]} \hlkwb{<-} \hlstd{tried}
+\hlstd{\}}
+\hlkwd{apply}\hlstd{(jackmat,} \hlnum{2}\hlstd{, sd,} \hlkwc{na.rm} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 \item Obtain 95\% bootstrap confidence intervals for the \texttt{m3} coefficient estimates from the bootstrap distribution of the coefficients.
 
-\begin{solution}
-\begin{lstlisting}
-t(apply(bootmat, 2, quantile, probs = c(0.025,0.975), na.rm = TRUE))
-\end{lstlisting}
-\end{solution}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{t}\hlstd{(}\hlkwd{apply}\hlstd{(bootmat,} \hlnum{2}\hlstd{, quantile,} \hlkwc{probs} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0.025}\hlstd{,}\hlnum{0.975}\hlstd{),} \hlkwc{na.rm} \hlstd{=} \hlnum{TRUE}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 \item Estimate the coefficients for \texttt{m4} using \texttt{optim}, obtain the standard errors as the diagonal of the matrix inverse of the negative hessian matrix, calculate the $z$-statistic for each coefficient estimate, and determine its two-tailed p-value from \texttt{pnorm} (the normal cumulative distribution function).
 
-\begin{solution}
-\begin{lstlisting}
-dat <- cbind(d$chga_demo,1,d$al_ethnic, log(d$wdi_landarea), d$gle_cgdpc/1e4, d$ross_oil_netexpc/1e3)
-cc <- complete.cases(dat)
-Xm4 <- dat[cc,-1]
-ym4 <- dat[cc,1]
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{dat} \hlkwb{<-} \hlkwd{cbind}\hlstd{(d}\hlopt{$}\hlstd{chga_demo,}\hlnum{1}\hlstd{,d}\hlopt{$}\hlstd{al_ethnic,} \hlkwd{log}\hlstd{(d}\hlopt{$}\hlstd{wdi_landarea),}
+             \hlstd{d}\hlopt{$}\hlstd{gle_cgdpc}\hlopt{/}\hlnum{1e4}\hlstd{, d}\hlopt{$}\hlstd{ross_oil_netexpc}\hlopt{/}\hlnum{1e3}\hlstd{)}
+\hlstd{cc} \hlkwb{<-} \hlkwd{complete.cases}\hlstd{(dat)}
+\hlstd{Xm4} \hlkwb{<-} \hlstd{dat[cc,}\hlopt{-}\hlnum{1}\hlstd{]}
+\hlstd{ym4} \hlkwb{<-} \hlstd{dat[cc,}\hlnum{1}\hlstd{]}
 
-optm4 <- optim(par = rep(0, 5),
-               fn = logitll,
-               X = Xm4,
-               y = ym4,
-               control = list(fnscale = -1),
-               hessian = TRUE,
-               method = "BFGS")
+\hlstd{optm4} \hlkwb{<-} \hlkwd{optim}\hlstd{(}\hlkwc{par} \hlstd{=} \hlkwd{rep}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{5}\hlstd{),}
+               \hlkwc{fn} \hlstd{= logitll,}
+               \hlkwc{X} \hlstd{= Xm4,}
+               \hlkwc{y} \hlstd{= ym4,}
+               \hlkwc{control} \hlstd{=} \hlkwd{list}\hlstd{(}\hlkwc{fnscale} \hlstd{=} \hlopt{-}\hlnum{1}\hlstd{),}
+               \hlkwc{hessian} \hlstd{=} \hlnum{TRUE}\hlstd{,}
+               \hlkwc{method} \hlstd{=} \hlstr{"BFGS"}\hlstd{)}
 
-# coefficient estimates
-optm4$par
+\hlcom{# coefficient estimates}
+\hlstd{optm4}\hlopt{$}\hlstd{par}
 
-# standard errors
-sqrt(diag(solve(-optm4$hessian)))
+\hlcom{# standard errors}
+\hlkwd{sqrt}\hlstd{(}\hlkwd{diag}\hlstd{(}\hlkwd{solve}\hlstd{(}\hlopt{-}\hlstd{optm4}\hlopt{$}\hlstd{hessian)))}
 
-# z-statistics
-zstats <- optm4$par/sqrt(diag(solve(-optm4$hessian)))
-zstats
+\hlcom{# z-statistics}
+\hlstd{zstats} \hlkwb{<-} \hlstd{optm4}\hlopt{$}\hlstd{par}\hlopt{/}\hlkwd{sqrt}\hlstd{(}\hlkwd{diag}\hlstd{(}\hlkwd{solve}\hlstd{(}\hlopt{-}\hlstd{optm4}\hlopt{$}\hlstd{hessian)))}
+\hlstd{zstats}
 
-# two-tailed p-values (two alternative strategies)
-2*(1-pnorm(abs(zstats)))
-2*pnorm(-abs(zstats))
-\end{lstlisting}
-\end{solution}
+\hlcom{# two-tailed p-values (two alternative strategies)}
+\hlnum{2}\hlopt{*}\hlstd{(}\hlnum{1}\hlopt{-}\hlkwd{pnorm}\hlstd{(}\hlkwd{abs}\hlstd{(zstats)))}
+\hlnum{2}\hlopt{*}\hlkwd{pnorm}\hlstd{(}\hlopt{-}\hlkwd{abs}\hlstd{(zstats))}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 
 \item Using your estimated coefficients for \texttt{m3} and \texttt{m4}, compute the \textit{average} predicted probability of observing the outcome when \texttt{al\_ethnic} is set to each of the five-number summary quantiles $(0.00, 0.25, 0.50, 0.75, 1.00)$ of the observed distribution of \texttt{al\_ethnic} and all other covariates are held at their observed values. Your results should be two vectors, one for each model, each containing five numbers.
 
-\begin{solution}
-\begin{lstlisting}
-# function to compute predicted probabilities
-pp <- function(dat, coefvec) {
-    mean(exp(dat %*% coefvec)/(1+exp(dat %*% coefvec)))
-}
-qs <- quantile(d$al_ethnic, c(0.00,0.25,0.50,0.75,1.00), na.rm = TRUE)
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# function to compute predicted probabilities}
+\hlstd{pp} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{dat}\hlstd{,} \hlkwc{coefvec}\hlstd{) \{}
+    \hlkwd{mean}\hlstd{(}\hlkwd{exp}\hlstd{(dat} \hlopt{%*%} \hlstd{coefvec)}\hlopt{/}\hlstd{(}\hlnum{1}\hlopt{+}\hlkwd{exp}\hlstd{(dat} \hlopt{%*%} \hlstd{coefvec)))}
+\hlstd{\}}
+\hlstd{qs} \hlkwb{<-} \hlkwd{quantile}\hlstd{(d}\hlopt{$}\hlstd{al_ethnic,} \hlkwd{c}\hlstd{(}\hlnum{0.00}\hlstd{,}\hlnum{0.25}\hlstd{,}\hlnum{0.50}\hlstd{,}\hlnum{0.75}\hlstd{,}\hlnum{1.00}\hlstd{),} \hlkwc{na.rm} \hlstd{=} \hlnum{TRUE}\hlstd{)}
 
-# m3
-Xm3tmp <- Xm3
-m3out <- numeric(5)
-for(i in seq_along(qs)) {
-    Xm3tmp[,2] <- qs[i]
-    m3out[i] <- pp(dat = Xm3tmp, coefvec = optm3$par)
-}
-m3out
+\hlcom{# m3}
+\hlstd{Xm3tmp} \hlkwb{<-} \hlstd{Xm3}
+\hlstd{m3out} \hlkwb{<-} \hlkwd{numeric}\hlstd{(}\hlnum{5}\hlstd{)}
+\hlkwa{for}\hlstd{(i} \hlkwa{in} \hlkwd{seq_along}\hlstd{(qs)) \{}
+    \hlstd{Xm3tmp[,}\hlnum{2}\hlstd{]} \hlkwb{<-} \hlstd{qs[i]}
+    \hlstd{m3out[i]} \hlkwb{<-} \hlkwd{pp}\hlstd{(}\hlkwc{dat} \hlstd{= Xm3tmp,} \hlkwc{coefvec} \hlstd{= optm3}\hlopt{$}\hlstd{par)}
+\hlstd{\}}
+\hlstd{m3out}
 
-# m4
-Xm4tmp <- Xm4
-m4out <- numeric(5)
-for(i in seq_along(qs)) {
-    Xm4tmp[,2] <- qs[i]
-    m4out[i] <- pp(dat = Xm4tmp, coefvec = optm4$par)
-}
-m4out
-\end{lstlisting}
-\end{solution}
+\hlcom{# m4}
+\hlstd{Xm4tmp} \hlkwb{<-} \hlstd{Xm4}
+\hlstd{m4out} \hlkwb{<-} \hlkwd{numeric}\hlstd{(}\hlnum{5}\hlstd{)}
+\hlkwa{for}\hlstd{(i} \hlkwa{in} \hlkwd{seq_along}\hlstd{(qs)) \{}
+    \hlstd{Xm4tmp[,}\hlnum{2}\hlstd{]} \hlkwb{<-} \hlstd{qs[i]}
+    \hlstd{m4out[i]} \hlkwb{<-} \hlkwd{pp}\hlstd{(}\hlkwc{dat} \hlstd{= Xm4tmp,} \hlkwc{coefvec} \hlstd{= optm4}\hlopt{$}\hlstd{par)}
+\hlstd{\}}
+\hlstd{m4out}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 
 \end{enumerate}
